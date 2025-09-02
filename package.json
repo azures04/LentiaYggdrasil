@@ -1,0 +1,34 @@
+{
+	"name": "lentiayggdrasil",
+	"version": "0.0.1-alpha",
+	"description": "Yggdrasil auth server with discord OAuth2 impl",
+	"homepage": "https://github.com/azures04/LentiaYggdrasil#readme",
+	"bugs": {
+		"url": "https://github.com/azures04/LentiaYggdrasil/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/azures04/LentiaYggdrasil.git"
+	},
+	"license": "AGPL-3.0-or-later",
+	"author": {
+		"email": "gilleslazure04@gmail.com",
+		"name": "azures04",
+		"url": "https://github.com/Azures04"
+	},
+	"type": "commonjs",
+	"main": "main.js",
+	"scripts": {
+		"start": "node server",
+		"start:dev": "nodemon server"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.2",
+		"colors": "^1.4.0",
+		"express": "^5.1.0",
+		"uuid": "^11.1.0"
+	},
+	"devDependencies": {
+		"nodemon": "^3.1.10"
+	}
+}
