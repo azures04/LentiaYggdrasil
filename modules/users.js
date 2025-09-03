@@ -51,7 +51,7 @@ function login(username, password) {
 
 function loginWithDiscord(discordId) {
     const users = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "users.json")))
-    const user = users.find($user => $user.discordProfile == discordProfile)
+    const user = users.find($user => $user.discordProfile == discordId)
     if (user) {
         return {
             code: 200,
@@ -67,4 +67,12 @@ function loginWithDiscord(discordId) {
 function hashPassword(password) {
     const SALT = this.randomInteger(1, 16)
     return bcrypt.hashSync(password, SALT)
+}
+
+module.exports = {
+    addUser,
+    removeUser,
+    renameUser,
+    login,
+    loginWithDiscord
 }

@@ -4,7 +4,6 @@ const config = require("../config.json")
 require("colors")
 
 class Logger {
-
     constructor(root) {
         this.root = root
 
