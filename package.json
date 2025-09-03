@@ -25,6 +25,7 @@
 	"dependencies": {
 		"bcryptjs": "^3.0.2",
 		"colors": "^1.4.0",
+		"discord-oauth2": "^2.12.1",
 		"express": "^5.1.0",
 		"uuid": "^11.1.0"
 	},

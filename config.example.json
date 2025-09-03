@@ -1,5 +1,6 @@
 {
     "web": {
         "port": 8010
-    }
+    },
+    "isProd": false
 }

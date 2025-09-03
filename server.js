@@ -20,7 +20,9 @@ for (let route of routes) {
         }
         const routeHandler = require(`./routes/${route}`)
         for (const stack of routeHandler.stack) {
-            logger.log(`${Object.keys(stack.route.methods).join("").toUpperCase().cyan} ${route.cyan.bold + stack.route.path.cyan.bold} route registered`)
+            if (stack.route?.methods) {
+                logger.log(`${Object.keys(stack.route.methods).join("").toUpperCase().cyan} ${route.cyan.bold + stack.route.path.cyan.bold} route registered`)
+            }
         }
 
         app.use(route, routeHandler)
