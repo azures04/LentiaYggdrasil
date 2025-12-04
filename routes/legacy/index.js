@@ -44,7 +44,7 @@ router.all("/", async (req, res) => {
 router.all("/session", async (req, res) => {
     const name = req.query.name || req.body.name
     const sessionId = req.query.session || req.body.session
-    if (!name || !session) {
+    if (!name || !sessionId) {
         return res.send("Bad response")
     }
     const serviceResult = await userService.validateLegacySession({ name, sessionId })
