@@ -27,7 +27,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "clientSessions".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersProperties".bold + " table created or is already existing")
     databse.exec(`
         CREATE TABLE IF NOT EXISTS clientSessions (
             accessToken TEXT NOT NULL,
@@ -37,6 +37,14 @@ async function setup() {
         )
     `)
     logger.log("[" + "MySQL".yellow + "] " + "clientSessions".bold + " table created or is already existing")
+    databse.exec(`
+        CREATE TABLE IF NOT EXISTS legacyClientSessions (
+            sessionId VARCHAR(36) NOT NULL,
+            uuid VARCHAR(36) NOT NULL,
+            FOREIGN KEY (uuid) REFERENCES players(uuid)
+        )
+    `)
+    logger.log("[" + "MySQL".yellow + "] " + "legacyClientSessions".bold + " table created or is already existing")
 }
 
 async function register(email, username, password) {
@@ -166,6 +174,45 @@ async function insertClientSession(accessToken, clientToken, uuid) {
     }
 }
 
+async function insertLegacyClientSessions(sessionId, uuid) {
+    try {
+        const deleteSql = `DELETE FROM legacyClientSessions WHERE uuid = ?`
+        databse.prepare(deleteSql).run(uuid)
+        const sql = `INSERT INTO legacyClientSessions (sessionId, uuid) VALUES (?, ?)`
+        const statement = databse.prepare(sql)
+        const result = statement.run(sessionId, uuid)
+        if (result.changes > 0) {
+            return { code: 200, sessionId, uuid }
+        } else {
+            return { code: 500, message: "Internal Server Error", error: "Unknown" }
+        }
+    } catch (error) {
+        return { code: 500, message: "Internal Server Error", error: error.toString() }
+    }
+}
+
+async function validateLegacyClientSession(sessionId, uuid) {
+    try {
+        const sql = `SELECT * FROM legacyClientSessions WHERE sessionId = ? AND uuid = ?`
+        const statement = databse.prepare(sql)
+        
+        const session = statement.get(sessionId, uuid) 
+        if (session) { 
+            return { 
+                code: 200, 
+                message: "Client session valid."
+            } 
+        } else {
+            return { 
+                code: 404, 
+                message: "Client session not found for this accessToken/clientToken combination" 
+            }
+        }
+    } catch (error) {
+        return { code: 500, message: "Internal Server Error", error: error.toString() }
+    }
+}
+
 async function validateClientSession(accessToken, clientToken) {
     try {
         const sql = `SELECT * FROM clientSessions WHERE accessToken = ? AND clientToken = ?`
@@ -245,4 +292,6 @@ module.exports = {
     upatePropertyToPlayer,
     deletePropertyToPlayer,
     invalidateClientSession,
+    insertLegacyClientSessions,
+    validateLegacyClientSession,
 }

@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken")
 const utils = require("../modules/utils")
 const bcrypt = require("bcryptjs")
+const crypto = require("node:crypto")
 const database = require("../modules/database")
 const certsManager = require("../modules/certsManager")
 const keys = certsManager.getKeys()
@@ -87,6 +88,7 @@ async function refreshToken({ previousAccessToken, clientToken, requireUser }) {
     if (userResult.code != 200) {
         return userResult
     }
+    await database.invalidateClientSession(previousAccessToken, clientToken)
     delete userResult.user.password
     const accessToken = jwt.sign({ username: userResult.user.username }, keys.jwt.private, { subject: userResult.user.uuid, issuer: "LentiaYggdrasil", expiresIn: "1d", algorithm: "RS256" })
     const clientSessionProcess = await database.insertClientSession(accessToken, uuidRegex.test(clientToken) == true ? clientToken : crypto.randomUUID(), userResult.user.uuid )
@@ -138,6 +140,26 @@ async function signout({ uuid }) {
     return revokationOperation
 }
 
+async function registerLegacySession({ uuid, sessionId }) {
+    const clientSession = await database.insertLegacyClientSessions(sessionId, uuid)
+    if (clientSession.code != 200) {
+        return clientSession
+    }
+    return { code: 200 }
+}
+
+async function validateLegacySession({ name, sessionId }) {
+    const userInformation = await database.getUser(name)
+    if (userInformation.code != 200) {
+        return userInformation
+    }
+    const clientSession = await database.validateLegacyClientSession(sessionId, userInformation.user.uuid)
+    if (clientSession.code != 200) {
+        return clientSession
+    }
+    return { code: 200 }
+}
+
 module.exports = {
     signout,
     validate,
@@ -145,4 +167,6 @@ module.exports = {
     registerUser,
     authenticate,
     refreshToken,
+    registerLegacySession,
+    validateLegacySession
 }
