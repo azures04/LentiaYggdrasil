@@ -4,7 +4,7 @@ const router = express.Router()
 const config = require("../../config.json")
 const Logger = require("../../modules/logger")
 const userService = require("../../services/userService")
-const logger = new Logger(path.join(__dirname, ".."))
+const logger = new Logger(path.join(__dirname, "..", ".."))
 
 router.all("/", async (req, res) => {
     const user = req.query.user || req.body.user

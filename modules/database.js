@@ -13,7 +13,7 @@ async function setup() {
     databse.exec(`
         CREATE TABLE IF NOT EXISTS players (
             email TEXT NULL,
-            username VARCHAR(${utils.getMinMaxFromRegex(config.players.usernameRegex).max}) NOT NULL,
+            username VARCHAR(${utils.getMinMaxFromRegex(`${regex}`).max}) NOT NULL,
             password TEXT NOT NULL,
             uuid VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY
         )

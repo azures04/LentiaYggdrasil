@@ -160,7 +160,12 @@ async function validateLegacySession({ name, sessionId }) {
     return { code: 200 }
 }
 
+async function getUser({ identifier }) {
+    return await database.getUser(identifier, false)
+}
+
 module.exports = {
+    getUser,
     signout,
     validate,
     invalidate,
@@ -168,5 +173,5 @@ module.exports = {
     authenticate,
     refreshToken,
     registerLegacySession,
-    validateLegacySession
+    validateLegacySession,
 }
