@@ -135,5 +135,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-#config
+#Yggdrasil
 config.json
+data/*
+tests/*
