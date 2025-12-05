@@ -149,11 +149,11 @@ async function registerLegacySession({ uuid, sessionId }) {
 }
 
 async function validateLegacySession({ name, sessionId }) {
-    const userInformation = await database.getUser(name)
-    if (userInformation.code != 200) {
-        return userInformation
+    const userQuery = await database.getUser(name)
+    if (userQuery.code != 200) {
+        return userQuery
     }
-    const clientSession = await database.validateLegacyClientSession(sessionId, userInformation.user.uuid)
+    const clientSession = await database.validateLegacyClientSession(sessionId, userQuery.user.uuid)
     if (clientSession.code != 200) {
         return clientSession
     }

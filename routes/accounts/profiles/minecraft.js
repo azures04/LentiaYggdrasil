@@ -9,14 +9,12 @@ router.post("/", async (req, res) => {
     }
     const players = []
     for (const username of req.body) {
-        const userInformation = await userService.getUser({ identifier: username })
-        if (userInformation.code == 200) {
+        const userQuery = await userService.getUser({ identifier: username })
+        if (userQuery.code == 200) {
             players.push({
-                id: userInformation.user.uuid.replace(/-/g, ""),
-                name: userInformation.user.name,
+                id: userQuery.user.uuid.replace(/-/g, ""),
+                name: userQuery.user.name,
             })
-        } else {
-            return utils.handleYggdrasilError(req, 400, "BadRequestException", "", "")
         }
     }
 })
