@@ -1,19 +1,18 @@
 const path = require("node:path")
 const utils = require("./utils")
-const config = require("../config.json")
 const Logger = require("./logger")
 const crypto = require("node:crypto")
 const bcrypt = require("bcryptjs")
 const logger = new Logger(path.join(__dirname, ".."))
 const Databse = require("better-sqlite3")
 const databse = new Databse(path.join(__dirname, "..", "data", "database.db"))
-const regex = /^[a-zA-Z0-9]{3,16}$/
+const usernameRegex = /^[a-zA-Z0-9]{3,16}$/
 
 async function setup() {
     databse.exec(`
         CREATE TABLE IF NOT EXISTS players (
             email TEXT NULL,
-            username VARCHAR(${utils.getMinMaxFromRegex(`${regex}`).max}) NOT NULL,
+            username VARCHAR(${utils.getMinMaxFromRegex(`${usernameRegex}`).max}) NOT NULL,
             password TEXT NOT NULL,
             uuid VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY
         )
@@ -41,15 +40,27 @@ async function setup() {
         CREATE TABLE IF NOT EXISTS legacyClientSessions (
             sessionId VARCHAR(36) NOT NULL,
             uuid VARCHAR(36) NOT NULL,
-            FOREIGN KEY (uuid) REFERENCES players(uuid)
+            FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
     logger.log("[" + "MySQL".yellow + "] " + "legacyClientSessions".bold + " table created or is already existing")
+    databse.exec(`
+        CREATE TABLE IF NOT EXISTS uuidToNameHistory (
+            uuid VARCHAR(36) NOT NULL,
+            username VARCHAR(255) NOT NULL,
+            changedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
+        )
+    `)
+    databse.exec(`
+        CREATE INDEX IF NOT EXISTS idx_uuidToNameHistory_uuid ON uuidToNameHistory (uuid)
+    `)
+    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " table created")
 }
 
 async function register(email, username, password) {
     try {
-        if (regex.test(username)) {
+        if (usernameRegex.test(username)) {
             const sql = `INSERT INTO players (email, username, password, uuid) VALUES (?, ?, ?, ?)`
             const statement = databse.prepare(sql)
             const uuid = crypto.randomUUID()
