@@ -1,8 +1,9 @@
 const database = require("./modules/database")
+const userService = require("./services/userService")
 
 async function main() {
-    const properties = await database.getPlayerProperties("81dbd296-5a0c-4518-92c6-6b62572d7b5a")
-    console.log(properties)
+    const user = await userService.getUser({ identifier: "d31974c9-040e-49be-9743-7a2f5143da56" })
+    console.log(user)
 }
 
 main()

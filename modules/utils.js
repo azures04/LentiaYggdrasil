@@ -1,3 +1,6 @@
+const usernameRegex = /^[a-zA-Z0-9]{3,16}$/
+const database = require("./database")
+
 function getMinMaxFromRegex(regexString) {
     const extractionRegex = /\{(?<min>\d+),(?<max>\d+)\}/
     const match = regexString.match(extractionRegex)
@@ -41,14 +44,14 @@ async function getRegistrationCountryFromIp(ipAddress) {
 
 function handleError(res, status, result, reqPath) {
     return res.status(status).json({
-        path: reqPath,
+        path: reqPath.replace(/:(\w+)/g, "<$1>"),
         code: status,
         message: result.message || "Internal Server Error",
         error: result.error || "Unknown"
     })
 }
 
-function handleYggdrasilError(res, status, error, cause, errorMessage) {
+function handleAuthError(res, status, error, cause, errorMessage) {
     return res.status(status).json({
         error,
         cause,
@@ -56,9 +59,87 @@ function handleYggdrasilError(res, status, error, cause, errorMessage) {
     })
 }
 
+function handleAccountsAPIError(res, status, reqPath, error, errorMessage) {
+    const $error = {}
+    if (reqPath && reqPath.trim() != "") {
+        $error.path = reqPath.replace(/:(\w+)/g, "<$1>")
+    }
+    if (error && error.trim() != "") {
+        $error.error = error
+    }
+    if (errorMessage && errorMessage.trim() != "") {
+        $error.errorMessage = errorMessage
+    }
+    return res.status(status).json($error)
+}
+
+function toTimestamp(dateStr) {
+    if (!dateStr) {
+        return null
+    }
+    return new Date(dateStr + "Z").getTime()
+}
+
+function isValidTimestamp(input) {
+    const timestamp = Number(input)
+    if (isNaN(timestamp)) {
+        return false
+    }
+
+    if (timestamp < 0) {
+        return false
+    }
+
+    const MAX_JS_DATE = 8640000000000000
+    if (timestamp > MAX_JS_DATE) {
+        return false
+    }
+
+    return true
+}
+
+function addDashesToUUID(uuid) {
+    if (typeof uuid !== "string" || uuid.length !== 32) {
+        return uuid
+    }
+
+    return (
+        uuid.slice(0, 8) + "-" +
+        uuid.slice(8, 12) + "-" +
+        uuid.slice(12, 16) + "-" +
+        uuid.slice(16, 20) + "-" +
+        uuid.slice(20)
+    )
+}
+
+function normalizeBooleanFields(data) {
+    if (!data || typeof data !== "object") {
+        return data
+    }
+
+    for (const key in data) {
+        const value = data[key]
+
+        if (typeof value === "object" && value !== null) {
+            normalizeBooleanFields(value)
+        }
+        
+        else if (key.endsWith("Allowed")) {
+            data[key] = !!value
+        }
+    }
+
+    return data
+}
+
 module.exports = {
+    toTimestamp,
     handleError,
+    addDashesToUUID,
+    handleAuthError,
+    isValidTimestamp,
     getMinMaxFromRegex,
-    handleYggdrasilError,
+    handleAccountsAPIError,
+    normalizeBooleanFields,
     getRegistrationCountryFromIp,
 }

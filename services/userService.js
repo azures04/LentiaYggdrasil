@@ -1,177 +1,327 @@
-const jwt = require("jsonwebtoken")
 const utils = require("../modules/utils")
-const bcrypt = require("bcryptjs")
-const crypto = require("node:crypto")
 const database = require("../modules/database")
-const certsManager = require("../modules/certsManager")
-const keys = certsManager.getKeys()
-const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
-async function registerUser({ username, password, email, registrationCountry, preferredLanguage, clientIp }) {
-    const userCheck = await database.getUser(username)
-    if (userCheck.code === 200) {
-        return { code: 409, message: "Username taken." }
+async function getUser({ identifier }) {
+    const result = await database.getUser(identifier, false)
+    if (result.code != 200) {
+        return result
     }
-    if (userCheck.code === 500) {
-        return userCheck
+    const beautifiedUserObject = utils.normalizeBooleanFields(result.user)
+    result.user = beautifiedUserObject
+    return result
+}
+
+async function getUsernameAt({ identifier, date }) {
+    const timestamp = utils.toTimestamp(date)
+    return await database.getNameUUIDs(identifier, timestamp)
+}
+
+async function getPlayerUsernamesHistory({ identifier }) {
+    return await database.getPlayerNameHistory(identifier)
+}
+
+async function getPrivileges({ uuid }) {
+    const result = await database.getPlayerPrivileges(uuid)
+    if (result.code != 200) {
+        return result
+    }
+    for (const key in result.data) {
+        if (!Object.hasOwn(result.data, key)) continue
+        const value = result.data[key]
+        result.data[key] = { enabled: !!value }
+    }
+    return result
+}
+
+async function getPreferences({ uuid }) {
+    const result = await database.getPlayerPreferences(uuid)
+    const preferences = {}
+    if (result.code != 200) {
+        return result
+    }
+    for (const key in result.data) {
+        if (!Object.hasOwn(result.data, key)) continue
+        const value = result.data[key]
+        preferences[`${key}Preferences`] = {}
+        preferences[`${key}Preferences`][`${key}On`] = !!value
+    }
+    result.data = preferences
+    return result
+}
+
+async function getPlayerBanStatus(uuid) {
+    const allBans = await database.getPlayerBans(uuid)
+    if (allBans.code == 204 || allBans.bans && allBans.bans.length === 0) {
+        return { isBanned: false, activeBan: null }
     }
 
-    const userRegistration = await database.register(email || "", username, password)
-    if (userRegistration.code !== 200) {
-        return userRegistration
+    const now = Date.now()
+    const potentialPermaBan = allBans.bans[0]
+    if (potentialPermaBan.expires === null) {
+        return {
+            isBanned: true,
+            activeBan: potentialPermaBan
+        }
     }
 
-    const { uuid } = userRegistration
-    const resolvedCountry = registrationCountry || await utils.getRegistrationCountryFromIp(clientIp)
-    const countryProp = await database.addPropertyToPlayer("registrationCountry", resolvedCountry || "UNKNOWN", uuid)
-    if (countryProp.code !== 200) {
-        return countryProp
+    const lastBan = allBans.bans[allBans.bans.length - 1]
+    if (lastBan.expires > now) {
+        return {
+            isBanned: true,
+            activeBan: lastBan,
+            timeLeft: lastBan.expires - now
+        }
     }
 
+    return { isBanned: false, activeBan: null }
+}
+
+function getPlayerSettingsSchema() {
+    const { privileges, preferences } = database.getPlayerSettingsSchema()
+
+    const privilegesSchema = privileges.reduce((acc, colName) => {
+        acc[colName] = null
+        return acc
+    }, {})
+
+    const preferencesSchema = preferences.reduce((acc, colName) => {
+        acc[`${colName}Preferences`] = {}
+        acc[`${colName}Preferences`][`${colName}On`] = null
+        return acc
+    }, {})
+
+    return { 
+        ...preferencesSchema, 
+        privileges: privilegesSchema 
+    }
+}
+
+async function updatePlayerSettings({ uuid, body }) {
+    const rawSchema = database.getPlayerSettingsSchema()
     
-    const languageProp = await database.addPropertyToPlayer("userPreferredLanguage", preferredLanguage || "fr-FR", uuid)
-    if (languageProp.code !== 200) {
-        return languageProp
-    }
+    const validPrivCols = Array.isArray(rawSchema.privileges) 
+        ? rawSchema.privileges 
+        : Object.keys(rawSchema.privileges)
 
-    return { code: 200, message: "User created successfully", uuid }
-}
+    const validPrefCols = Array.isArray(rawSchema.preferences) 
+        ? rawSchema.preferences 
+        : Object.keys(rawSchema.preferences)
 
-async function authenticate({ identifier, password, clientToken, requireUser }) {
-    const userResult = await database.getUser(identifier, true)
-    if (userResult.code != 200) {
-        return userResult
+    const updates = {
+        privileges: {},
+        preferences: {}
     }
-    const passwordValidationProcess = await bcrypt.compare(password, userResult.user.password)
-    if (!passwordValidationProcess) {
-        return { code: 403, error: "ForbiddenOperationException", message: "Invalid credentials. Invalid username or password." }
-    }
-    delete userResult.user.password
-    const accessToken = jwt.sign({ username: userResult.user.username }, keys.jwt.private, { subject: userResult.user.uuid, issuer: "LentiaYggdrasil", expiresIn: "1d", algorithm: "RS256" })
-    const clientSessionProcess = await database.insertClientSession(accessToken, uuidRegex.test(clientToken) == true ? clientToken : crypto.randomUUID(), userResult.user.uuid )
-    if (clientSessionProcess.code != 204) {
-        return clientSessionProcess
-    }
-    const userObject = {
-        clientToken: clientSessionProcess.clientToken,
-        accessToken: clientSessionProcess.accessToken,
-        availableProfiles: [
-            {
-                name: userResult.user.username,
-                id: userResult.user.uuid,
+    
+    validPrefCols.forEach(colName => {
+        const wrapperKey = `${colName}Preferences`
+        const valueKey = `${colName}On`
+        const value = body[wrapperKey]?.[valueKey]
+
+        if (typeof value === "boolean") {
+            updates.preferences[colName] = value ? 1 : 0
+        }
+    })
+
+    if (body.privileges) {
+        validPrivCols.forEach(colName => {
+            const enabled = body.privileges[colName]?.enabled
+
+            if (typeof enabled === "boolean") {
+                updates.privileges[colName] = enabled ? 1 : 0
             }
-        ],
-        selectedProfile: {
-            name: userResult.user.username,
-            id: userResult.user.uuid,
+        })
+    }
+
+    const results = []
+
+    if (Object.keys(updates.preferences).length > 0) {
+        const res = await database.updatePlayerPreferences(uuid, updates.preferences)
+        results.push({ type: "preferences", ...res })
+    }
+    if (Object.keys(updates.privileges).length > 0) {
+        const res = await database.updatePlayerPrivileges(uuid, updates.privileges)
+        results.push({ type: "privileges", ...res })
+    }
+
+    if (results.length === 0) {
+        return { 
+            code: 400, 
+            message: "No valid settings detected. Check your JSON structure.",
+            received: body 
         }
     }
-    if (requireUser) {
-        const propertiesRequest = await database.getPlayerProperties(userResult.user.uuid)
-        if (propertiesRequest.code != 200) {
-            return propertiesRequest
-        }
-        userObject.user = {
-            username: userResult.user.username,
-            properties: propertiesRequest.properties
+
+    return { 
+        code: 200, 
+        message: "Settings updated successfully.", 
+        details: results 
+    }
+}
+
+async function blockUser({ blockerUuid, targetUuid }) {
+    if (blockerUuid === targetUuid) {
+        return { 
+            code: 400, 
+            message: "You cannot block yourself." 
         }
     }
+
+    const result = await database.blockPlayer(blockerUuid, targetUuid)
+    if (result.code !== 200) {
+        if (result.error && result.error.includes("FOREIGN KEY constraint failed")) {
+            return { code: 404, message: "Target player not found." }
+        }
+        return { code: 500, message: "Internal Server Error", error: result.error }
+    }
+
+    return { 
+        code: 200, 
+        message: result.changed ? "User successfully blocked." : "User was already blocked." 
+    }
+}
+
+async function unblockUser({ blockerUuid, targetUuid }) {
+    const result = await database.unblockPlayer(blockerUuid, targetUuid)
+    if (result.code !== 200) {
+        return { code: 500, message: "Internal Server Error", error: result.error }
+    }
+
     return {
-        code: 200,
-        response: userObject
+        code: 200, 
+        message: result.changed ? "User successfully unblocked." : "User was not blocked." 
     }
 }
 
-async function refreshToken({ previousAccessToken, clientToken, requireUser }) {
-    const identifier = jwt.decode(previousAccessToken).sub
-    const userResult = await database.getUser(identifier, true)
-    if (userResult.code != 200) {
-        return userResult
+async function getBlockedProfiles({ blockerUuid }) {
+    const result = await database.getBlockedUuids(blockerUuid)
+    if (result.code !== 200) {
+        return { code: 500, message: "Internal Server Error", error: result.error }
     }
-    await database.invalidateClientSession(previousAccessToken, clientToken)
-    delete userResult.user.password
-    const accessToken = jwt.sign({ username: userResult.user.username }, keys.jwt.private, { subject: userResult.user.uuid, issuer: "LentiaYggdrasil", expiresIn: "1d", algorithm: "RS256" })
-    const clientSessionProcess = await database.insertClientSession(accessToken, uuidRegex.test(clientToken) == true ? clientToken : crypto.randomUUID(), userResult.user.uuid )
-    if (clientSessionProcess.code != 204) {
-        return clientSessionProcess
-    }
-    const userObject = {
-        clientToken: clientSessionProcess.clientToken,
-        accessToken: clientSessionProcess.accessToken,
-        selectedProfile: {
-            name: userResult.user.username,
-            id: userResult.user.uuid,
-        }
-    }
-    if (requireUser) {
-        const propertiesRequest = await database.getPlayerProperties(userResult.user.uuid)
-        if (propertiesRequest.code != 200) {
-            return propertiesRequest
-        }
-        userObject.user = {
-            username: userResult.user.username,
-            properties: propertiesRequest.properties
-        }
-    }
-    return {
-        code: 200,
-        response: userObject
-    }
+    return { code: 200, blockedProfiles: result.data.filter((uuid) => {
+        return uuid.replace(/-/g, "")
+    })}
 }
 
-async function validate({ accessToken, clientToken }) {
-    const clientSession = await database.validateClientSession(accessToken, clientToken)
-    if (clientSession.code != 200) {
-        return clientSession
-    }
-    return { code: 204 }
-}
-
-async function invalidate({ accessToken, clientToken }) {
-    const clientSession = await database.invalidateClientSession(accessToken, clientToken)
-    if (clientSession.code != 200) {
-        return clientSession
-    }
-    return { code: 204 }
-}
-
-async function signout({ uuid }) {
-    const revokationOperation = await database.revokeAccessTokens(uuid)
-    return revokationOperation
-}
-
-async function registerLegacySession({ uuid, sessionId }) {
-    const clientSession = await database.insertLegacyClientSessions(sessionId, uuid)
-    if (clientSession.code != 200) {
-        return clientSession
-    }
-    return { code: 200 }
-}
-
-async function validateLegacySession({ name, sessionId }) {
-    const userQuery = await database.getUser(name)
+async function getPlayerNameChangeStatus({ uuid }) {
+    const userQuery = await database.getUser(uuid)
     if (userQuery.code != 200) {
         return userQuery
     }
-    const clientSession = await database.validateLegacyClientSession(sessionId, userQuery.user.uuid)
-    if (clientSession.code != 200) {
-        return clientSession
-    }
-    return { code: 200 }
+
+    const changeStatus = await database.getPlayerNameChangeStatus(uuid)
+    return changeStatus
 }
 
-async function getUser({ identifier }) {
-    return await database.getUser(identifier, false)
+async function getSkins({ uuid }) {
+    const result = await database.getPlayerSkins(uuid)
+
+    if (result.code !== 200) {
+        return result
+    }
+
+    const formattedSkins = result.skins.map(skin => ({
+        id: skin.id.toString(),
+        state: skin.isSelected ? "ACTIVE" : "INACTIVE",
+        url: skin.url,
+        textureKey: skin.textureKey,
+        variant: skin.variant
+    }))
+
+    return { code: 200, data: formattedSkins }
+}
+
+async function getCapes({ uuid }) {
+    const result = await database.getPlayerCapes(uuid)
+
+    if (result.code !== 200) {
+        return result
+    }
+
+    const formattedCapes = result.capes.map(cape => ({
+        id: cape.id.toString(),
+        state: cape.isSelected ? "ACTIVE" : "INACTIVE",
+        url: cape.url,
+        alias: cape.alias || "Custom Cape"
+    }))
+
+    return { code: 200, data: formattedCapes }
+}
+
+async function changeUsername({ uuid, newUsername }) {
+    const availability = database.checkUsernameAvailability(newUsername)
+    
+    if (!availability.allowed) {
+        return { code: 400, message: availability.message }
+    }
+
+    const userQuery = await database.getUser(newUsername)
+    if (userQuery.code == 500) {
+        return userQuery
+    } else if (userQuery.code == 200) {
+        return { code: 400, message: "Username taken" }
+    }
+
+    return await database.changeUsername(uuid, newUsername)
+}
+
+async function setSkin({ uuid, textureUuid, variant }) {
+    const validVariants = ["CLASSIC", "SLIM"]
+    const safeVariant = (variant && validVariants.includes(variant.toUpperCase())) 
+        ? variant.toUpperCase() 
+        : "CLASSIC"
+
+    return await database.setSkin(uuid, textureUuid, safeVariant)
+}
+
+async function resetSkin({ uuid }) {
+    return await database.resetSkin(uuid)
+}
+
+async function deleteSkin({ uuid, textureUuid }) {
+    if (!textureUuid) {
+        return { code: 400, message: "Missing textureUuid." }
+    }
+    return await database.deletePlayerSkin(uuid, textureUuid)
+}
+
+async function showCape({ uuid, textureUuid }) {
+    if (!textureUuid) {
+        return { code: 400, message: "Missing textureUuid." }
+    }
+    return await database.showCape(uuid, textureUuid)
+}
+
+async function hideCape({ uuid }) {
+    return await database.hideCape(uuid)
+}
+
+async function addCape({ uuid, textureUuid }) {
+    if (!textureUuid) {
+        return { code: 400, message: "Missing textureUuid." }
+    }
+    return await database.addCapeToWardrobe(uuid, textureUuid)
 }
 
 module.exports = {
     getUser,
-    signout,
-    validate,
-    invalidate,
-    registerUser,
-    authenticate,
-    refreshToken,
-    registerLegacySession,
-    validateLegacySession,
+    getSkins,
+    setSkin,
+    addCape,
+    getCapes,
+    showCape,
+    hideCape,
+    resetSkin,
+    blockUser,
+    deleteSkin,
+    unblockUser,
+    getUsernameAt,
+    getPrivileges,
+    changeUsername,
+    getPreferences,
+    getBlockedProfiles,
+    getPlayerBanStatus,
+    updatePlayerSettings,
+    getPlayerSettingsSchema,
+    getPlayerUsernamesHistory,
+    getPlayerNameChangeStatus,
 }

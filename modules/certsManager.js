@@ -24,18 +24,23 @@ function generateKeysPair() {
 }
 
 function setupKeys() {
-    if (!fs.existsSync(path.join(keysRoot, "jwt-public.pem")) || !fs.existsSync(path.join(keysRoot, "jwt-private.pem"))) {
-        if (!fs.existsSync(keysRoot)) {
-            fs.mkdirSync(keysRoot, { recursive: true })
-        }
+    if (!fs.existsSync(keysRoot)) {
+        fs.mkdirSync(keysRoot, { recursive: true })
+    }
+    if (!fs.existsSync(path.join(keysRoot, "authenticationKeys-public.pem")) || !fs.existsSync(path.join(keysRoot, "authenticationKeys-private.pem"))) {
         const { publicKey, privateKey } = generateKeysPair()
-        fs.writeFileSync(path.join(keysRoot, "jwt-public.pem"), publicKey)
-        fs.writeFileSync(path.join(keysRoot, "jwt-private.pem"), privateKey)
+        fs.writeFileSync(path.join(keysRoot, "authenticationKeys-public.pem"), publicKey)
+        fs.writeFileSync(path.join(keysRoot, "authenticationKeys-private.pem"), privateKey)
+    }
+    if (!fs.existsSync(path.join(keysRoot, "profilePropertyKeys-public.pem")) || !fs.existsSync(path.join(keysRoot, "profilePropertyKeys-private.pem"))) {
+        const { publicKey, privateKey } = generateKeysPair()
+        fs.writeFileSync(path.join(keysRoot, "profilePropertyKeys-public.pem"), publicKey)
+        fs.writeFileSync(path.join(keysRoot, "profilePropertyKeys-private.pem"), privateKey)
     }
 }
 
 function getKeys() {
-    const keysList = ["jwt"]
+    const keysList = ["authenticationKeys", "profilePropertyKeys"]
     const keys = {}
     for (const key of keysList) {
         keys[key] = {}
@@ -45,7 +50,18 @@ function getKeys() {
     return keys
 }
 
+function extractKeyFromPem(pemKey) {
+    const keyRegex = /-----BEGIN (?:PUBLIC|PRIVATE) KEY-----\s*([\s\S]+?)\s*-----END (?:PUBLIC|PRIVATE) KEY-----/
+    const match = pemKey.match(keyRegex)
+    if (match && match[1]) {
+        const rawKey = match[1].replace(/\s/g, "")
+        return rawKey
+    }
+    return null
+}
+
 module.exports = {
+    extractKeyFromPem,
     setupKeys,
-    getKeys
+    getKeys,
 }

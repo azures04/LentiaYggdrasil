@@ -137,5 +137,6 @@ dist
 
 #Yggdrasil
 config.json
-data/*
+data/keys
+data/database.db
 tests/*

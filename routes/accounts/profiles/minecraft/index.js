@@ -1,11 +1,11 @@
 const express = require("express")
-const utils = require("../../../modules/utils")
-const userService = require("../../../services/userService")
+const utils = require("../../../../modules/utils")
+const userService = require("../../../../services/userService")
 const router = express.Router()
 
 router.post("/", async (req, res) => {
     if (!req.body || !Array.isArray(req.body) || req.body.length > 10) {
-        return utils.handleYggdrasilError(res, 400, "Bad Request", "Malformed request", "Invalid body")
+        return utils.handleAuthError(res, 400, "Bad Request", "Malformed request", "Invalid body")
     }
     const players = []
     for (const username of req.body) {

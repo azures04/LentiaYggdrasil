@@ -3,7 +3,8 @@ const express = require("express")
 const router = express.Router()
 const config = require("../../config.json")
 const Logger = require("../../modules/logger")
-const userService = require("../../services/userService")
+const authService = require("../../services/authService")
+const sessionsService = require("../../services/sessionsService")
 const logger = new Logger(path.join(__dirname, "..", ".."))
 
 router.all("/", async (req, res) => {
@@ -18,7 +19,7 @@ router.all("/", async (req, res) => {
         return res.send("Old version")
     }
 
-    const serviceResult = await userService.authenticateUser({ 
+    const serviceResult = await authService.authenticate({ 
         identifier: user, 
         clientToken: "",
         password: password, 
@@ -31,8 +32,7 @@ router.all("/", async (req, res) => {
     const username = serviceResult.response.selectedProfile.name
     const sessionId = serviceResult.response.clientToken
     const uid = serviceResult.response.selectedProfile.id
-
-    const legacySession = await userService.registerLegacySession({ uid, sessionId })
+    const legacySession = await sessionsService.registerLegacySession({ uid, sessionId })
     if (legacySession.code != 200) {
         return res.status(500).send("Internal Server Error")
     }
@@ -47,7 +47,7 @@ router.all("/session", async (req, res) => {
     if (!name || !sessionId) {
         return res.send("Bad response")
     }
-    const serviceResult = await userService.validateLegacySession({ name, sessionId })
+    const serviceResult = await sessionsService.validateLegacySession({ name, sessionId })
     return res.status(serviceResult.code)
 })
 

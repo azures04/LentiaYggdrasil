@@ -16,6 +16,8 @@ class Logger {
         if (!fs.existsSync(path.join(this.root, "logs"))) {
             fs.mkdirSync(path.join(this.root, "logs"))
         }
+
+        process.env.TZ = "Europe/Paris"
     }
 
     log(content) {
