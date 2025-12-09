@@ -102,8 +102,49 @@ async function getProfile({ uuid, unsigned = false }) {
     }
 }
 
+async function joinServer({ accessToken, selectedProfile, serverId, ip }) {
+    if (!accessToken || !selectedProfile || !serverId) {
+        return { code: 400, message: "Missing required fields" }
+    }
+
+    const sessionCheck = await database.validateClientSession(accessToken, selectedProfile)
+    if (sessionCheck.code !== 200) {
+        return { code: 403, message: "Invalid access token" }
+    }
+
+    const saveResult = database.saveServerSession(selectedProfile, accessToken, serverId, ip)
+    if (saveResult.code !== 200) {
+        return { code: 500, message: "Failed to save server session" }
+    }
+
+    return { code: 204 }
+}
+
+async function hasJoinedServer({ username, serverId, ip }) {
+    const userResult = await database.getUser(username, false)
+    if (userResult.code !== 200) {
+        return { code: 204, message: "User not found" }
+    }
+
+    const { uuid } = userResult.user
+    const joinCheck = database.getServerSession(uuid, serverId)
+
+    if (joinCheck.code !== 200 || !joinCheck.valid) {
+        return { code: 204, message: "Join verification failed" }
+    }
+
+    const profileResult = await module.exports.getSessionProfile({ 
+        uuid: uuid, 
+        unsigned: false 
+    })
+
+    return profileResult
+}
+
 module.exports = {
     getProfile,
+    joinServer,
+    hasJoinedServer,
     getBlockedServers,
     registerLegacySession,
     validateLegacySession,

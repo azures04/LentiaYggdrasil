@@ -275,6 +275,17 @@ async function setup() {
         )
     `)
     logger.log("[" + "MySQL".yellow + "] " + "playerProfileActions".bold + " table ready")
+    database.exec(`
+        CREATE TABLE IF NOT EXISTS serverSessions (
+            uuid VARCHAR(36) PRIMARY KEY, -- Un joueur ne peut joindre qu'un serveur à la fois
+            accessToken VARCHAR(512) NOT NULL,
+            serverId VARCHAR(255) NOT NULL,
+            ip VARCHAR(45) NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
+        )
+    `)
+    logger.log("[" + "MySQL".yellow + "] " + "serverSessions".bold + " table ready")
 }
 
 async function register(email, username, password) {
@@ -1368,9 +1379,6 @@ async function clearAllPlayerActions(uuid) {
 
 async function getActiveSkin(uuid) {
     try {
-        // CORRECTION : On utilise l'UUID tel quel (avec les tirets) 
-        // car c'est ainsi qu'il est stocké dans la table playersSkins.
-        
         const sql = `
             SELECT t.url, ps.variant 
             FROM playersSkins ps
@@ -1418,6 +1426,41 @@ async function getProfileActionsList(uuid) {
     }
 }
 
+function getServerSession(uuid, serverId) {
+    try {
+        const sql = `
+            SELECT ip 
+            FROM serverSessions 
+            WHERE uuid = ? AND serverId = ?
+        `
+        const statement = database.prepare(sql)
+        const session = statement.get(uuid, serverId)
+
+        if (!session) {
+            return { code: 404, valid: false }
+        }
+
+        return { code: 200, valid: true, ip: session.ip }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function saveServerSession(uuid, accessToken, serverId, ip) {
+    try {
+        const sql = `
+            INSERT OR REPLACE INTO serverSessions (uuid, accessToken, serverId, ip, createdAt)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `
+        const statement = database.prepare(sql)
+        const result = statement.run(uuid, accessToken, serverId, ip)
+
+        return { code: 200, success: result.changes > 0 }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
 module.exports = {
     setup,
     getUser,
@@ -1443,12 +1486,14 @@ module.exports = {
     registerTexture,
     getBlockedUuids,
     getPlayerActions,
+    getServerSession,
     addProfileAction,
     deletePlayerSkin,
     getBlockedServers,
     getUsernamesRules,
     addCapeToWardrobe,
     getPlayerProperty,
+    saveServerSession,
     revokeAccessTokens,
     removeProfileAction,
     getServerBanDetails,
