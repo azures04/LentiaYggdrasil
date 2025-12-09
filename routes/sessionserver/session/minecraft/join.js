@@ -11,7 +11,7 @@ router.post("", async (req, res) => {
         return utils.handleAccountsAPIError(res, verificationResult.code, req.originalUrl, verificationResult.error, verificationResult.message)
     }
 
-    const ip = req.headers["x-forwarded-for'"] || req.socket.remoteAddress
+    const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress
     const result = await sessionsService.joinServer({ clientToken: verificationResult.session.clientToken, accessToken, selectedProfile: utils.addDashesToUUID(selectedProfile), serverId, ip })
     if (result.code === 204) {
         return res.status(204).end()
