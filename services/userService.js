@@ -341,7 +341,34 @@ async function uploadSkinFromUrl(uuid, url, variant) {
             return { code: 403, message: "Forbidden URL (Localhost/Private IP)" }
         }
 
-        const response = await fetch(url)
+        let currentUrl = url
+        let response
+        const MAX_REDIRECTS = 3
+
+        for (let i = 0; i <= MAX_REDIRECTS; i++) {
+            response = await fetch(currentUrl, { redirect: "manual" })
+            if (response.status >= 300 && response.status < 400) {
+                const location = response.headers.get("location")
+                if (!location) {
+                    return { code: 400, message: "Invalid redirect (no location)." }
+                }
+
+                const nextUrl = new URL(location, currentUrl).toString()
+                if (!utils.isSafeUrl(nextUrl)) {
+                    return { code: 403, message: "Forbidden Redirect URL (Target is unsafe)" }
+                }
+
+                console.log(`[Security] Following safe redirect to: ${nextUrl}`)
+                currentUrl = nextUrl
+                continue
+            }
+            break
+        }
+
+        if (response.status >= 300 && response.status < 400) {
+            return { code: 400, message: "Too many redirects." }
+        }
+
         if (!response.ok) {
             return { code: 400, message: "Could not fetch skin." }
         }
@@ -379,6 +406,12 @@ async function uploadSkinFromFile(uuid, fileObject, variant) {
     if (!fileObject || !fileObject.buffer) {
         return { code: 400, message: "No file provided." }
     }
+    
+    const pngInfo = utils.getPngDimensions(fileObject.buffer)
+    if (!pngInfo) {
+        return { code: 400, message: "Invalid file format. Only valid PNGs are allowed." }
+    }
+    
     return await processAndSetSkin(uuid, fileObject.buffer, variant)
 }
 

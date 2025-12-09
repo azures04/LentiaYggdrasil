@@ -9,6 +9,16 @@ const express = require("express")
 const app = express()
 const Logger = require("./modules/logger")
 const logger = new Logger(__dirname)
+const rateLimit = require("express-rate-limit")
+
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 600,
+    standardHeaders: true,
+	legacyHeaders: false,
+})
+
+app.use(limiter)
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

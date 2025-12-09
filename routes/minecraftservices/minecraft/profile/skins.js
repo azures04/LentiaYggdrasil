@@ -1,3 +1,4 @@
+const path = require("node:path")
 const express = require("express")
 const utils = require("../../../../modules/utils")
 const userService = require("../../../../services/userService")
@@ -6,7 +7,9 @@ const multer = require("multer")
 const router = express.Router()
 
 const upload = multer({ 
-    storage: multer.diskStorage(), 
+    storage: multer.diskStorage({
+        destination: path.join(__dirname, "data", "temps")
+    }),
     limits: { fileSize: 2 * 1024 * 1024 }
 })
 

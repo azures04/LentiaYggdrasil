@@ -1,6 +1,6 @@
 const crypto = require("node:crypto")
 const certsManager = require("./certsManager")
-const serverKeys = certsManager.getKeys()
+// const serverKeys = certsManager.getKeys()
 
 function getMinMaxFromRegex(regexString) {
     const extractionRegex = /\{(?<min>\d+),(?<max>\d+)\}/
