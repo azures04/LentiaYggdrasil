@@ -146,13 +146,51 @@ function signProfileData(dataBase64) {
     }
 }
 
+function isSafeUrl(urlString) {
+    try {
+        const url = new URL(urlString)
+        if (!["http:", "https:"].includes(url.protocol)) {
+            return false
+        }
+
+        const hostname = url.hostname
+        if (hostname === "localhost" || hostname === "::1") {
+            return false
+        }
+
+        const privateIpRegex = /(^127\.)|(^10\.)|(^172\.1[6-9]\.)|(^172\.2[0-9]\.)|(^172\.3[0-1]\.)|(^192\.168\.)|(^0\.0\.0\.0$)/
+        if (privateIpRegex.test(hostname)) {
+            return false
+        }
+
+        return true
+    } catch (e) {
+        return false
+    }
+}
+
+function getPngDimensions(buffer) {
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+
+    if (!buffer || buffer.length < 24 || !buffer.subarray(0, 8).equals(pngSignature)) {
+        return null
+    }
+
+    const width = buffer.readUInt32BE(16)
+    const height = buffer.readUInt32BE(20)
+
+    return { valid: true, width, height }
+}
+
 module.exports = {
+    isSafeUrl,
     toTimestamp,
     handleError,
     signProfileData,
     addDashesToUUID,
     handleAuthError,
     isValidTimestamp,
+    getPngDimensions,
     getMinMaxFromRegex,
     handleAccountsAPIError,
     normalizeBooleanFields,

@@ -294,7 +294,7 @@ async function register(email, username, password) {
             const sql = `INSERT INTO players (email, username, password, uuid) VALUES (?, ?, ?, ?)`
             const statement = database.prepare(sql)
             const uuid = crypto.randomUUID()
-            const hashedPassword = await bcrypt.hash(password, 2)
+            const hashedPassword = await bcrypt.hash(password, 10)
             const result = statement.run(email, username, hashedPassword, uuid)
             if (result.changes > 0) {
                 return { code: 200, email, username, uuid }
@@ -302,7 +302,7 @@ async function register(email, username, password) {
                 return { code: 500, message: "Internal Server Error", error: "Unknown" }
             }
         } else {
-            return { code: 422, message: "Illegal Server Character", error: "INVALID_USERNAME_FORMAT" }
+            return { code: 415, message: "Illegal Server Character", error: "INVALID_USERNAME_FORMAT" }
         }
     } catch (error) {
         return { code: 500, message: "Internal Server Error", error: error.toString() }

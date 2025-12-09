@@ -133,6 +133,10 @@ async function hasJoinedServer({ username, serverId, ip }) {
         return { code: 204, message: "Join verification failed" }
     }
 
+    if (joinCheck.ip != ip) {
+        return { code: 204, message: "Invalid IP address" }
+    }
+
     const profileResult = await module.exports.getSessionProfile({ 
         uuid: uuid, 
         unsigned: false 

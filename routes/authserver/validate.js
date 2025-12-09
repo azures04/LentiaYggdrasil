@@ -7,7 +7,7 @@ const logger = require("../../modules/logger")
 router.post("", async (req, res) => {
     const { accessToken, clientToken } = req.body
     if (!req.body || !accessToken || !clientToken ) {
-        return utils.handleAuthError(res, 422, "Unsupported Media Type", "Missing element(s) in request body", "The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method")
+        return utils.handleAuthError(res, 415, "Unsupported Media Type", "Missing element(s) in request body", "The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method")
     }
     
     const serviceResult = await authService.validate({ accessToken, clientToken })

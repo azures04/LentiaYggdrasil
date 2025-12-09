@@ -337,16 +337,42 @@ async function processAndSetSkin(uuid, imageBuffer, variant) {
 
 async function uploadSkinFromUrl(uuid, url, variant) {
     try {
+        if (!utils.isSafeUrl(url)) {
+            return { code: 403, message: "Forbidden URL (Localhost/Private IP)" }
+        }
+
         const response = await fetch(url)
         if (!response.ok) {
-            return { code: 400, message: "Could not fetch skin from URL." }
+            return { code: 400, message: "Could not fetch skin." }
         }
+
+        const contentLength = response.headers.get("content-length")
+        if (contentLength && parseInt(contentLength) > 2 * 1024 * 1024) {
+            return { code: 400, message: "File too large." }
+        }
+
         const arrayBuffer = await response.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
+        if (buffer.length > 2 * 1024 * 1024) {
+            return { code: 400, message: "File too large." }
+        }
+
+        const pngInfo = utils.getPngDimensions(buffer)
+        if (!pngInfo) {
+            return { code: 400, message: "Invalid file format. Only valid PNGs are allowed." }
+        }
+        if (pngInfo.width !== 64 || (pngInfo.height !== 64 && pngInfo.height !== 32)) {
+            return { 
+                code: 400, 
+                message: `Invalid skin dimensions: ${pngInfo.width}x${pngInfo.height}. Required: 64x64 or 64x32.` 
+            }
+        }
+
         return await processAndSetSkin(uuid, buffer, variant)
+
     } catch (error) {
-        return { code: 500, message: "Error fetching external skin.", error: error.toString() }
+        return { code: 500, message: "Error processing skin.", error: error.toString() }
     }
 }
 

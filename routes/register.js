@@ -10,7 +10,7 @@ router.post("/", async (req, res) => {
     const { username, password, email, registrationCountry, preferredLanguage } = req.body
     
     if (!req.body || !username || !password || !email) {
-        return utils.handleError(res, 422, { message: "Username and password are required.", error: "" }, req.originalUrl)
+        return utils.handleError(res, 415, { message: "Username and password are required.", error: "" }, req.originalUrl)
     }
 
     const clientIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress

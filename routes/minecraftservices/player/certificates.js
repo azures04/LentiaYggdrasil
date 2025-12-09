@@ -9,7 +9,7 @@ router.post("", async (req, res) => {
         return utils.handleAccountsAPIError(res, 401, req.originalUrl, "", "")
     }
     if (!req.body) {
-        return utils.handleAccountsAPIError(res, 422, req.originalUrl, "", "Missing body.")
+        return utils.handleAccountsAPIError(res, 415, req.originalUrl, "", "Missing body.")
     }
     const bearer = req.headers.authorization.replace("Bearer", "").trim()
     const verificationResult = await authService.verifyAccessToken({ accessToken: bearer })
