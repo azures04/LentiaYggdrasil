@@ -7,6 +7,7 @@ const certsManager = require("../modules/certsManager")
 const serverKeys = certsManager.getKeys()
 const TEXTURES_DIR = path.join(__dirname, "..", "data", "textures")
 const maintenanceService = require("./maintenanceService")
+const ssrfcheck = require("ssrfcheck")
 
 async function getUser({ identifier }) {
     const result = await database.getUser(identifier, false)
@@ -337,7 +338,7 @@ async function processAndSetSkin(uuid, imageBuffer, variant) {
 
 async function uploadSkinFromUrl(uuid, url, variant) {
     try {
-        if (!utils.isSafeUrl(url)) {
+        if (!ssrfcheck.isSSRFSafeURL(url)) {
             return { code: 403, message: "Forbidden URL (Localhost/Private IP)" }
         }
 

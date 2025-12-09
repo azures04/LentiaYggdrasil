@@ -8,8 +8,9 @@ router.post("/", async (req, res) => {
         return utils.handleAuthError(res, 400, "Bad Request", "Malformed request", "Invalid body")
     }
     const players = []
-    for (const username of req.body) {
-        const userQuery = await userService.getUser({ identifier: username })
+    const promises = req.body.map(username => userService.getUser({ identifier: username }));
+    const userQueries = await Promise.all(promises)
+    for (const userQuery of userQueries) {
         if (userQuery.code == 200) {
             players.push({
                 id: userQuery.user.uuid.replace(/-/g, ""),
