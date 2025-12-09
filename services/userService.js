@@ -402,14 +402,7 @@ async function fetchOrGenerateCertificate(uuid) {
     
     const signatureV2 = signer.sign(serverPrivateKey, "base64")
 
-    const saveResult = database.savePlayerCertificate(
-        uuid, 
-        privateKey, 
-        publicKey, 
-        signatureV2, 
-        expiresAt, 
-        refreshedAfter
-    )
+    const saveResult = database.savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter)
     
     if (saveResult.code !== 200) {
         return { code: 500, message: "Database error while saving certificate" }

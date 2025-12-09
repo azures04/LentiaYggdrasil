@@ -132,9 +132,23 @@ function normalizeBooleanFields(data) {
     return data
 }
 
+function signProfileData(dataBase64) {
+    try {
+        const privateKey = serverKeys.playerCertificateKeys.private
+        const signer = crypto.createSign("SHA1")
+        signer.update(dataBase64)
+        signer.end()
+        return signer.sign(privateKey, "base64")
+    } catch (err) {
+        console.error("Signing failed:", err)
+        return null
+    }
+}
+
 module.exports = {
     toTimestamp,
     handleError,
+    signProfileData,
     addDashesToUUID,
     handleAuthError,
     isValidTimestamp,

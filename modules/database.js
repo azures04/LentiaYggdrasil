@@ -265,6 +265,16 @@ async function setup() {
         )
     `)
     logger.log("[" + "SQLite".yellow + "] " + "playerCertificates".bold + " table ready")
+    database.exec(`
+        CREATE TABLE IF NOT EXISTS playerProfileActions (
+            uuid VARCHAR(36) NOT NULL,
+            action VARCHAR(64) NOT NULL,
+            createdAt TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+            PRIMARY KEY (uuid, action),
+            FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
+        )
+    `)
+    logger.log("[" + "MySQL".yellow + "] " + "playerProfileActions".bold + " table ready")
 }
 
 async function register(email, username, password) {
@@ -1288,6 +1298,125 @@ function deleteExpiredCertificates(isoDate) {
     }
 }
 
+function addProfileAction(uuid, actionCode) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = "INSERT OR IGNORE INTO playerProfileActions (uuid, action) VALUES (?, ?)"
+        const statement = database.prepare(sql)
+        const result = statement.run(cleanUuid, actionCode)
+
+        return { 
+            code: 200, 
+            success: true,
+            added: result.changes > 0
+        }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function removeProfileAction(uuid, actionCode) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = "DELETE FROM playerProfileActions WHERE uuid = ? AND action = ?"
+        const statement = database.prepare(sql)
+        const result = statement.run(cleanUuid, actionCode)
+
+        return { 
+            code: 200, 
+            deletedCount: result.changes 
+        };
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function getPlayerActions(uuid) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = "SELECT action FROM playerProfileActions WHERE uuid = ?"
+        const statement = database.prepare(sql)
+        const rows = statement.all(cleanUuid)
+
+        
+        const actionsList = rows.map(row => row.action)
+
+        return { 
+            code: 200, 
+            actions: actionsList 
+        }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function clearAllPlayerActions(uuid) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = "DELETE FROM playerProfileActions WHERE uuid = ?"
+        const statement = database.prepare(sql)
+        const result = statement.run(cleanUuid)
+
+        return { 
+            code: 200, 
+            deletedCount: result.changes 
+        };
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function getActiveSkin(uuid) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = `
+            SELECT t.url, ps.variant 
+            FROM playersSkins ps
+            JOIN textures t ON ps.assetHash = t.hash
+            WHERE ps.playerUuid = ? AND ps.isSelected = 1
+        `
+        const statement = database.prepare(sql)
+        const skin = statement.get(cleanUuid)
+
+        return { code: 200, data: skin || null }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function getActiveCape(uuid) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = `
+            SELECT t.url 
+            FROM playersCapes pc
+            JOIN textures t ON pc.assetHash = t.hash
+            WHERE pc.playerUuid = ? AND pc.isSelected = 1
+        `
+        const statement = database.prepare(sql)
+        const cape = statement.get(cleanUuid)
+
+        return { code: 200, data: cape || null }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function getProfileActionsList(uuid) {
+    try {
+        const cleanUuid = uuid.replace(/-/g, "")
+        const sql = "SELECT action FROM playerProfileActions WHERE uuid = ?"
+        const statement = database.prepare(sql)
+        const rows = statement.all(cleanUuid)
+
+        const actions = rows.map(row => row.action)
+
+        return { code: 200, data: actions }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
 module.exports = {
     setup,
     getUser,
@@ -1304,18 +1433,23 @@ module.exports = {
     unbanServer,
     getNameUUIDs,
     getPlayerBans,
+    getActiveSkin,
+    getActiveCape,
     unblockPlayer,
     getPlayerCapes,
     changeUsername,
     getPlayerSkins,
     registerTexture,
     getBlockedUuids,
+    getPlayerActions,
+    addProfileAction,
     deletePlayerSkin,
     getBlockedServers,
     getUsernamesRules,
     addCapeToWardrobe,
     getPlayerProperty,
     revokeAccessTokens,
+    removeProfileAction,
     getServerBanDetails,
     getPlayerPrivileges,
     addPropertyToPlayer,
@@ -1325,7 +1459,9 @@ module.exports = {
     getPlayerPreferences,
     getPlayerCertificate,
     getPlayerNameHistory,
+    clearAllPlayerActions,
     validateClientSession,
+    getProfileActionsList,
     upatePropertyToPlayer,
     savePlayerCertificate,
     deletePropertyToPlayer,
