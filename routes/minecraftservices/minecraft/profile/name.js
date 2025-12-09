@@ -52,7 +52,6 @@ router.put("/:name", async (req, res) => {
             code = 403
         }
         if (usernameChangeResult.message.startsWith("Username taken")) {
-            console.log(usernameChangeResult)
             status = "DUPLICATE"
             code = 403
         }

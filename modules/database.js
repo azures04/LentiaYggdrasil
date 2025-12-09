@@ -19,7 +19,7 @@ async function setup() {
             createdAt TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "players".bold + " table created or is already existing"),
+    logger.log("[" + "MySQL".yellow + "] " + "players".bold + " table ready"),
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersProperties (
             name VARCHAR(256) NOT NULL,
@@ -28,7 +28,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersProperties".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersProperties".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS clientSessions (
             accessToken TEXT NOT NULL,
@@ -37,7 +37,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "clientSessions".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "clientSessions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS legacyClientSessions (
             sessionId VARCHAR(36) NOT NULL,
@@ -45,7 +45,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "legacyClientSessions".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "legacyClientSessions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS uuidToNameHistory (
             uuid VARCHAR(36) NOT NULL,
@@ -54,11 +54,11 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " table ready")
     database.exec(`
         CREATE INDEX IF NOT EXISTS idx_uuidToNameHistory_uuid ON uuidToNameHistory (uuid)
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " uuid index created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " uuid index ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS log_new_user_name
         AFTER INSERT ON players
@@ -68,7 +68,7 @@ async function setup() {
             VALUES (NEW.uuid, NEW.username, NULL);
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "log_new_user_name".bold + " trigger created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "log_new_user_name".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS log_user_name_change
         AFTER UPDATE ON players
@@ -78,7 +78,7 @@ async function setup() {
             VALUES (NEW.uuid, NEW.username, CURRENT_TIMESTAMP);
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "log_user_name_change".bold + " trigger created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "log_user_name_change".bold + " trigger ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS blockedServers (
             hashedIp VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -86,7 +86,7 @@ async function setup() {
             reason VARCHAR(512) NULL
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "blockedServers".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "blockedServers".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersPrivileges (
             uuid VARCHAR(36) PRIMARY KEY,
@@ -97,7 +97,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersPrivileges".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersPrivileges".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersPreferences (
             uuid VARCHAR(36) PRIMARY KEY,
@@ -105,14 +105,14 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersPreferences".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersPreferences".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS banReasons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key VARCHAR(512) UNIQUE NOT NULL
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "banReasons".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "banReasons".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS bans (
             banId VARCHAR(512) PRIMARY KEY NOT NULL,
@@ -124,11 +124,11 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " table ready")
     database.exec(`
         CREATE INDEX IF NOT EXISTS idx_bans_uuid ON bans (uuid)
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " uuid index created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " uuid index ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS auto_init_player_settings
         AFTER INSERT ON players
@@ -138,7 +138,7 @@ async function setup() {
             INSERT INTO playersPreferences (uuid) VALUES (NEW.uuid);
         END;
     `)
-    logger.log("[" + "SQLite".yellow + "] " + "auto_init_player_settings".bold + " trigger created or is already existing")
+    logger.log("[" + "SQLite".yellow + "] " + "auto_init_player_settings".bold + " trigger ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersBlockslist (
             blockerUuid VARCHAR(36) NOT NULL,
@@ -148,7 +148,7 @@ async function setup() {
             FOREIGN KEY (blockedUuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersBlockslist".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersBlockslist".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS usernameRules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -156,7 +156,7 @@ async function setup() {
             type INTEGER DEFAULT 0
         )
     `)
-    logger.log("[" + "SQLite".yellow + "] " + "usernameBlocklist".bold + " table created or is already existing")
+    logger.log("[" + "SQLite".yellow + "] " + "usernameBlocklist".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS textures (
             uuid VARCHAR(36) NOT NULL UNIQUE,
@@ -167,7 +167,7 @@ async function setup() {
             createdAt TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "textures".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "textures".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersSkins (
             playerUuid VARCHAR(36) NOT NULL,
@@ -182,9 +182,9 @@ async function setup() {
             FOREIGN KEY (assetHash) REFERENCES textures(hash)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " table ready")
     database.exec(`CREATE INDEX IF NOT EXISTS idx_active_skin ON playersSkins (playerUuid, isSelected)`)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersCapes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -197,9 +197,9 @@ async function setup() {
             FOREIGN KEY (assetHash) REFERENCES textures(hash)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersCapes".bold + " table created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersCapes".bold + " table ready")
     database.exec(`CREATE INDEX IF NOT EXISTS idx_active_skin ON playersCapes (playerUuid, assetHash)`)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index created or is already existing")
+    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
     database.exec(`INSERT OR IGNORE INTO textures (hash, type, url, uuid) VALUES ('df8ed96c557d441a63e7b6a4a911ab84fa453b42fc2ae6b01c3e1b02e138168c', 'SKIN', '/texture/alex.png', '${crypto.randomUUID()}')`)
     database.exec(`INSERT OR IGNORE INTO textures (hash, type, url, uuid) VALUES ('4c7b0468044bfecacc43d00a3a69335a834b73937688292c20d3988cae58248d', 'SKIN', '/texture/steve.png', '${crypto.randomUUID()}')`)
     logger.log("[" + "MySQL".yellow + "] Inserted (or already inserted) defaults skin (steve, alex) in " + "textures".bold)
@@ -215,7 +215,7 @@ async function setup() {
             AND assetHash != NEW.assetHash;
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "unique_active_skin".bold + " trigger created")
+    logger.log("[" + "MySQL".yellow + "] " + "unique_active_skin".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS unique_active_cape
         AFTER UPDATE OF isSelected ON playersCapes
@@ -228,7 +228,7 @@ async function setup() {
             AND id != NEW.id;
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "unique_active_cape".bold + " trigger created")
+    logger.log("[" + "MySQL".yellow + "] " + "unique_active_cape".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS auto_assign_random_default_skin
         AFTER INSERT ON players
@@ -252,7 +252,19 @@ async function setup() {
             LIMIT 1;
         END;
     `)
-    logger.log("[" + "SQLite".yellow + "] " + "auto_assign_random_default_skin".bold + " trigger created")
+    logger.log("[" + "SQLite".yellow + "] " + "auto_assign_random_default_skin".bold + " trigger ready")
+    database.exec(`
+        CREATE TABLE IF NOT EXISTS playerCertificates (
+            uuid VARCHAR(36) PRIMARY KEY,
+            privateKey TEXT NOT NULL,
+            publicKey TEXT NOT NULL,
+            publicKeySignatureV2 TEXT NOT NULL,
+            expiresAt TEXT NOT NULL,
+            refreshedAfter TEXT NOT NULL,
+            FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
+        )
+    `)
+    logger.log("[" + "SQLite".yellow + "] " + "playerCertificates".bold + " table ready")
 }
 
 async function register(email, username, password) {
@@ -1029,17 +1041,19 @@ async function getPlayerCapes(playerUuid) {
 
 async function deletePlayerSkin(playerUuid, textureUuid) {
     try {
-        const sql = `
+        const deleteSql = `
             DELETE FROM playersSkins 
             WHERE playerUuid = ? 
             AND assetHash = (SELECT hash FROM textures WHERE uuid = ?)
-        `;
-        const result = database.prepare(sql).run(playerUuid, textureUuid)
+        `
+        const deleteStatement = database.prepare(deleteSql)
+        const deleteResult = deleteStatement.run(playerUuid, textureUuid)
         
-        if (result.changes > 0) {
+        if (deleteResult.changes > 0) {
             return { code: 200, message: "Skin deleted" }
         }
         return { code: 404, message: "Skin not found in wardrobe" }
+
     } catch (error) {
         return { code: 500, error: error.toString() }
     }
@@ -1116,7 +1130,7 @@ async function resetSkin(playerUuid) {
             VALUES (?, ?, ?, 0)
         `
         const insertStatement = database.prepare(insertSql)
-        const insertResult = insertStatement.run(playerUuid, targetHash, variant)
+        insertStatement.run(playerUuid, targetHash, variant)
 
         const updateSql = `
             UPDATE playersSkins 
@@ -1136,23 +1150,25 @@ async function resetSkin(playerUuid) {
     }
 }
 
-async function setSkin(playerUuid, textureUuid, variant = 'CLASSIC') {
+async function setSkin(playerUuid, textureUuid, variant = "CLASSIC") {
     try {
-        const texSql = "SELECT hash FROM textures WHERE uuid = ? AND type = 'SKIN'"
-        const statement = database.prepare(texSql)
-        const texture = statement.get(textureUuid)
+        const selectSql = "SELECT hash FROM textures WHERE uuid = ? AND type = 'SKIN'"
+        const selectStatement = database.prepare(selectSql)
+        const texture = selectStatement.get(textureUuid)
 
         if (!texture) {
             return { code: 404, message: "Texture not found or not a SKIN" }
         }
 
-        const sql = `
+        const insertSql = `
             INSERT OR REPLACE INTO playersSkins (playerUuid, assetHash, variant, isSelected)
             VALUES (?, ?, ?, 1)
         `
-        database.prepare(sql).run(playerUuid, texture.hash, variant)
+        const insertStatement = database.prepare(insertSql)
+        const insertResult = insertStatement.run(playerUuid, texture.hash, variant)
 
-        return { code: 200, message: "Skin added and equipped" }
+        return { code: 200, message: "Skin set successfully" }
+
     } catch (error) {
         return { code: 500, error: error.toString() }
     }
@@ -1181,6 +1197,97 @@ async function addCapeToWardrobe(playerUuid, textureUuid) {
     }
 }
 
+function registerTexture(hash, type, url, alias = null) {
+    try {
+        const selectSql = "SELECT uuid FROM textures WHERE hash = ?"
+        const selectStatement = database.prepare(selectSql)
+        const existingTexture = selectStatement.get(hash)
+
+        if (existingTexture) {
+            return { 
+                code: 200, 
+                textureUuid: existingTexture.uuid, 
+                isNew: false 
+            }
+        }
+
+        const uuid = crypto.randomUUID()
+        const insertSql = `
+            INSERT INTO textures (uuid, hash, type, url, alias) 
+            VALUES (?, ?, ?, ?, ?)
+        `
+        const insertStatement = database.prepare(insertSql)
+        const insertResult = insertStatement.run(uuid, hash, type, url, alias)
+
+        return { 
+            code: 201, 
+            textureUuid: uuid, 
+            isNew: true 
+        }
+
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function getPlayerCertificate(uuid) {
+    try {
+        const sql = "SELECT * FROM playerCertificates WHERE uuid = ?"
+        const statement = database.prepare(sql)
+        const cert = statement.get(uuid)
+
+        if (cert) {
+            return { code: 200, data: cert }
+        }
+        return { code: 404, message: "Certificate not found" }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter) {
+    try {
+        const sql = `
+            INSERT OR REPLACE INTO playerCertificates 
+            (uuid, privateKey, publicKey, publicKeySignatureV2, expiresAt, refreshedAfter)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `
+        const statement = database.prepare(sql)
+        
+        const result = statement.run(
+            uuid, 
+            privateKey, 
+            publicKey, 
+            signatureV2, 
+            expiresAt, 
+            refreshedAfter
+        )
+
+        if (result.changes > 0) {
+            return { code: 200, message: "Certificate saved" }
+        }
+        return { code: 500, message: "Failed to save certificate" }
+
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
+function deleteExpiredCertificates(isoDate) {
+    try {
+        const sql = "DELETE FROM playerCertificates WHERE expiresAt < ?"
+        const statement = database.prepare(sql)
+        const result = statement.run(isoDate)
+
+        return { 
+            code: 200, 
+            deletedCount: result.changes 
+        }
+    } catch (error) {
+        return { code: 500, error: error.toString() }
+    }
+}
+
 module.exports = {
     setup,
     getUser,
@@ -1201,6 +1308,7 @@ module.exports = {
     getPlayerCapes,
     changeUsername,
     getPlayerSkins,
+    registerTexture,
     getBlockedUuids,
     deletePlayerSkin,
     getBlockedServers,
@@ -1215,15 +1323,18 @@ module.exports = {
     getPlayerUsernameAt,
     insertClientSession,
     getPlayerPreferences,
+    getPlayerCertificate,
     getPlayerNameHistory,
     validateClientSession,
     upatePropertyToPlayer,
+    savePlayerCertificate,
     deletePropertyToPlayer,
     updatePlayerPrivileges,
     invalidateClientSession,
     updatePlayerPreferences,
     getPlayerSettingsSchema,
     checkUsernameAvailability,
+    deleteExpiredCertificates,
     getPlayerNameChangeStatus,
     insertLegacyClientSessions,
     validateLegacyClientSession,

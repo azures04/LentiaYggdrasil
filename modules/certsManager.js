@@ -2,6 +2,7 @@ const fs = require("node:fs")
 const path = require("node:path")
 const crypto = require("node:crypto")
 const keysRoot = path.join(__dirname, "..", "data", "keys")
+const keysList = ["authenticationKeys", "profilePropertyKeys", "playerCertificateKeys"]
 
 function generateKeysPair() { 
     try {
@@ -27,20 +28,16 @@ function setupKeys() {
     if (!fs.existsSync(keysRoot)) {
         fs.mkdirSync(keysRoot, { recursive: true })
     }
-    if (!fs.existsSync(path.join(keysRoot, "authenticationKeys-public.pem")) || !fs.existsSync(path.join(keysRoot, "authenticationKeys-private.pem"))) {
-        const { publicKey, privateKey } = generateKeysPair()
-        fs.writeFileSync(path.join(keysRoot, "authenticationKeys-public.pem"), publicKey)
-        fs.writeFileSync(path.join(keysRoot, "authenticationKeys-private.pem"), privateKey)
-    }
-    if (!fs.existsSync(path.join(keysRoot, "profilePropertyKeys-public.pem")) || !fs.existsSync(path.join(keysRoot, "profilePropertyKeys-private.pem"))) {
-        const { publicKey, privateKey } = generateKeysPair()
-        fs.writeFileSync(path.join(keysRoot, "profilePropertyKeys-public.pem"), publicKey)
-        fs.writeFileSync(path.join(keysRoot, "profilePropertyKeys-private.pem"), privateKey)
+    for (const key of keysList) {
+        if (!fs.existsSync(path.join(keysRoot, `${key}-public.pem`)) || !fs.existsSync(path.join(keysRoot, `${key}-private.pem`))) {
+            const { publicKey, privateKey } = generateKeysPair()
+            fs.writeFileSync(path.join(keysRoot, `${key}-public.pem`), publicKey)
+            fs.writeFileSync(path.join(keysRoot, `${key}-private.pem`), privateKey)
+        }
     }
 }
 
 function getKeys() {
-    const keysList = ["authenticationKeys", "profilePropertyKeys"]
     const keys = {}
     for (const key of keysList) {
         keys[key] = {}

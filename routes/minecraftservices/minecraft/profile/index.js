@@ -1,6 +1,5 @@
 const express = require("express")
 const utils = require("../../../../modules/utils")
-const database = require("../../../../modules/database")
 const userService = require("../../../../services/userService")
 const authService = require("../../../../services/authService")
 const router = express.Router()

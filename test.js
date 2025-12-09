@@ -1,9 +1,10 @@
 const database = require("./modules/database")
+const certsManager = require("./modules/certsManager")
 const userService = require("./services/userService")
 
 async function main() {
-    const user = await userService.getUser({ identifier: "d31974c9-040e-49be-9743-7a2f5143da56" })
-    console.log(user)
+    const toLog = certsManager.getKeys() 
+    console.log(toLog)
 }
 
 main()

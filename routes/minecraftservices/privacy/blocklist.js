@@ -32,7 +32,7 @@ router.put("/:uuid", async (req, res) => {
         return utils.handleAccountsAPIError(res, verificationResult.code, req.originalUrl, verificationResult.error, verificationResult.message)
     }
 
-    const blockResult = await userService.blockUser({ blockerUuid: verificationResult.user.uuid, targetUuid: req.params.uuid })
+    const blockResult = await userService.blockUser({ blockerUuid: verificationResult.user.uuid, targetUuid: utils.addDashesToUUID(req.params.uuid) })
     if (blockResult.code != 200) {
         return utils.handleAccountsAPIError(res, blockResult.code, req.originalUrl, blockResult.error, blockResult.message)
     }
@@ -55,7 +55,7 @@ router.delete("/:uuid", async (req, res) => {
         return utils.handleAccountsAPIError(res, verificationResult.code, req.originalUrl, verificationResult.error, verificationResult.message)
     }
 
-    const unblockResult = await userService.unblockUser({ blockerUuid: verificationResult.user.uuid, targetUuid: req.params.uuid })
+    const unblockResult = await userService.unblockUser({ blockerUuid: verificationResult.user.uuid, targetUuid: utils.addDashesToUUID(req.params.uuid) })
     if (unblockResult.code != 200) {
         return utils.handleAccountsAPIError(res, unblockResult.code, req.originalUrl, unblockResult.error, unblockResult.message)
     }

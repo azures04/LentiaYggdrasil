@@ -1,5 +1,12 @@
+const fs = require("node:fs/promises")
+const path = require("node:path")
 const utils = require("../modules/utils")
+const crypto = require("node:crypto")
 const database = require("../modules/database")
+const certsManager = require("../modules/certsManager")
+const serverKeys = certsManager.getKeys()
+
+const TEXTURES_DIR = path.join(__dirname, "..", "data", "textures")
 
 async function getUser({ identifier }) {
     const result = await database.getUser(identifier, false)
@@ -302,6 +309,127 @@ async function addCape({ uuid, textureUuid }) {
     return await database.addCapeToWardrobe(uuid, textureUuid)
 }
 
+async function processAndSetSkin(uuid, imageBuffer, variant) {
+    try {
+        const hash = crypto.createHash("sha256").update(imageBuffer).digest("hex")
+        
+        const filePath = path.join(TEXTURES_DIR, `${hash}.png`)
+        const publicUrl = `/texture/${hash}.png`
+
+        try {
+            await fs.access(filePath)
+        } catch (e) {
+            await fs.writeFile(filePath, imageBuffer)
+        }
+
+        const registerResult = database.registerTexture(hash, "SKIN", publicUrl)
+        
+        if (registerResult.code !== 200 && registerResult.code !== 201) {
+            return registerResult
+        }
+
+        return await module.exports.setSkin(uuid, registerResult.textureUuid, variant)
+
+    } catch (error) {
+        return { code: 500, message: "Error processing skin file", error: error.toString() }
+    }
+}
+
+async function uploadSkinFromUrl(uuid, url, variant) {
+    try {
+        const response = await fetch(url)
+        if (!response.ok) {
+            return { code: 400, message: "Could not fetch skin from URL." }
+        }
+        const arrayBuffer = await response.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+
+        return await processAndSetSkin(uuid, buffer, variant)
+    } catch (error) {
+        return { code: 500, message: "Error fetching external skin.", error: error.toString() }
+    }
+}
+
+async function uploadSkinFromFile(uuid, fileObject, variant) {
+    if (!fileObject || !fileObject.buffer) {
+        return { code: 400, message: "No file provided." }
+    }
+    return await processAndSetSkin(uuid, fileObject.buffer, variant)
+}
+
+async function fetchOrGenerateCertificate(uuid) {
+    const now = new Date()
+    maintenanceService.cleanupCertificates().catch(err => {
+        console.error("[Non-Critical] Certificate cleanup failed: ", err)
+    })
+
+    const cached = database.getPlayerCertificate(uuid)
+
+    if (cached.code === 200) {
+        const expiresAtDate = new Date(cached.data.expiresAt)
+        if (expiresAtDate > new Date(now.getTime() + 60000)) {
+            return {
+                code: 200,
+                data: {
+                    keyPair: {
+                        privateKey: cached.data.privateKey,
+                        publicKey: cached.data.publicKey
+                    },
+                    publicKeySignature: cached.data.publicKeySignatureV2,
+                    publicKeySignatureV2: cached.data.publicKeySignatureV2,
+                    expiresAt: cached.data.expiresAt,
+                    refreshedAfter: cached.data.refreshedAfter
+                }
+            }
+        }
+    }
+    
+    const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", {
+        modulusLength: 4096,
+        publicKeyEncoding: { type: "pkcs1", format: "pem" },
+        privateKeyEncoding: { type: "pkcs1", format: "pem" }
+    })
+
+    const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString()
+    const refreshedAfter = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
+
+    const serverPrivateKey = serverKeys.playerCertificateKeys.private
+
+    const signer = crypto.createSign("SHA256")
+    signer.update(uuid)
+    signer.update(publicKey)
+    signer.update(expiresAt)
+    
+    const signatureV2 = signer.sign(serverPrivateKey, "base64")
+
+    const saveResult = database.savePlayerCertificate(
+        uuid, 
+        privateKey, 
+        publicKey, 
+        signatureV2, 
+        expiresAt, 
+        refreshedAfter
+    )
+    
+    if (saveResult.code !== 200) {
+        return { code: 500, message: "Database error while saving certificate" }
+    }
+
+    return {
+        code: 200,
+        data: {
+            keyPair: {
+                privateKey: privateKey,
+                publicKey: publicKey
+            },
+            publicKeySignature: signatureV2,
+            publicKeySignatureV2: signatureV2,
+            expiresAt: expiresAt,
+            refreshedAfter: refreshedAfter
+        }
+    }
+}
+
 module.exports = {
     getUser,
     getSkins,
@@ -318,10 +446,13 @@ module.exports = {
     getPrivileges,
     changeUsername,
     getPreferences,
+    uploadSkinFromUrl,
+    uploadSkinFromFile,
     getBlockedProfiles,
     getPlayerBanStatus,
     updatePlayerSettings,
     getPlayerSettingsSchema,
-    getPlayerUsernamesHistory,
     getPlayerNameChangeStatus,
+    getPlayerUsernamesHistory,
+    fetchOrGenerateCertificate,
 }
