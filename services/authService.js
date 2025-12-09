@@ -169,7 +169,7 @@ async function verifyAccessToken({ accessToken }) {
             issuer: "LentiaYggdrasil"
         })
 
-        const clientToken = decoded.clientToken;
+        const clientToken = decoded.clientToken
         if (!clientToken) {
             return { code: 403, message: "Token format invalid (missing clientToken)." }
         }
@@ -184,6 +184,9 @@ async function verifyAccessToken({ accessToken }) {
             user: {
                 uuid: decoded.sub,
                 username: decoded.username
+            },
+            session: {
+                clientToken
             }
         }
 

@@ -5,8 +5,8 @@ const crypto = require("node:crypto")
 const database = require("../modules/database")
 const certsManager = require("../modules/certsManager")
 const serverKeys = certsManager.getKeys()
-
 const TEXTURES_DIR = path.join(__dirname, "..", "data", "textures")
+const maintenanceService = require("./maintenanceService")
 
 async function getUser({ identifier }) {
     const result = await database.getUser(identifier, false)
@@ -370,7 +370,6 @@ async function uploadSkinFromUrl(uuid, url, variant) {
         }
 
         return await processAndSetSkin(uuid, buffer, variant)
-
     } catch (error) {
         return { code: 500, message: "Error processing skin.", error: error.toString() }
     }
@@ -410,7 +409,7 @@ async function fetchOrGenerateCertificate(uuid) {
         }
     }
     
-    const { privateKey, publicKey } = crypto.generateKeyPairSync("rsa", {
+    const { privateKey, publicKey } = await crypto.generateKeyPair("rsa", {
         modulusLength: 4096,
         publicKeyEncoding: { type: "pkcs1", format: "pem" },
         privateKeyEncoding: { type: "pkcs1", format: "pem" }

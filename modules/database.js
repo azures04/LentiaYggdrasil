@@ -277,7 +277,7 @@ async function setup() {
     logger.log("[" + "MySQL".yellow + "] " + "playerProfileActions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS serverSessions (
-            uuid VARCHAR(36) PRIMARY KEY, -- Un joueur ne peut joindre qu'un serveur à la fois
+            uuid VARCHAR(36) PRIMARY KEY,
             accessToken VARCHAR(512) NOT NULL,
             serverId VARCHAR(255) NOT NULL,
             ip VARCHAR(45) NULL,
@@ -1218,7 +1218,7 @@ async function addCapeToWardrobe(playerUuid, textureUuid) {
     }
 }
 
-function registerTexture(hash, type, url, alias = null) {
+async function registerTexture(hash, type, url, alias = null) {
     try {
         const selectSql = "SELECT uuid FROM textures WHERE hash = ?"
         const selectStatement = database.prepare(selectSql)

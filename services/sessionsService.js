@@ -102,12 +102,12 @@ async function getProfile({ uuid, unsigned = false }) {
     }
 }
 
-async function joinServer({ accessToken, selectedProfile, serverId, ip }) {
-    if (!accessToken || !selectedProfile || !serverId) {
+async function joinServer({ accessToken, selectedProfile, clientToken, serverId, ip }) {
+    if (!selectedProfile || !accessToken || !selectedProfile || !serverId) {
         return { code: 400, message: "Missing required fields" }
     }
 
-    const sessionCheck = await database.validateClientSession(accessToken, selectedProfile)
+    const sessionCheck = await database.validateClientSession(accessToken, clientToken)
     if (sessionCheck.code !== 200) {
         return { code: 403, message: "Invalid access token" }
     }
