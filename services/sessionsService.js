@@ -1,4 +1,5 @@
 const database = require("../modules/database")
+const utils = require("../modules/utils")
 
 async function registerLegacySession({ uuid, sessionId }) {
     const clientSession = await database.insertLegacyClientSessions(sessionId, uuid)
@@ -25,40 +26,44 @@ async function getBlockedServers() {
 }
 
 async function getProfile({ uuid, unsigned = false }) {
-    const userResult = database.getUser(uuid)
+    const userResult = await database.getUser(uuid, false)
+
     if (userResult.code !== 200) {
         return { code: 204, message: "User not found" }
     }
-    
-    const { username, uuid: cleanUuid } = userResult.data
 
-    const skinResult = database.getActiveSkin(cleanUuid)
-    if (skinResult.code === 500) {
-        return skinResult
-    }
+    const dbUser = userResult.user
+    const username = dbUser.username
+    const cleanUuid = dbUser.uuid.replace(/-/g, "")
 
-    const capeResult = database.getActiveCape(cleanUuid)
-    if (capeResult.code === 500) {
-        return capeResult
-    }
+    const skinPromise = database.getActiveSkin(dbUser.uuid)
+    const capePromise = database.getActiveCape(dbUser.uuid)
+    const actionsPromise = database.getProfileActionsList(dbUser.uuid)
 
-    const actionsResult = database.getProfileActionsList(cleanUuid)
-    if (actionsResult.code === 500) {
-        return actionsResult
-    }
+    const [skinResult, capeResult, actionsResult] = await Promise.all([
+        skinPromise, 
+        capePromise, 
+        actionsPromise
+    ])
+
+    if (skinResult.code === 500) return skinResult
+    if (capeResult.code === 500) return capeResult
+    if (actionsResult.code === 500) return actionsResult
 
     const activeSkin = skinResult.data
     const activeCape = capeResult.data
     const profileActions = actionsResult.data || []
 
-    const shouldIncludeCape = !!activeCape
+    const isSkinBanned = profileActions.includes("USING_BANNED_SKIN")
+    const hasValidSkin = activeSkin && !isSkinBanned
+    const hasValidCape = !!activeCape
 
-    const skinNode = {
+    const skinNode = hasValidSkin ? {
         url: activeSkin.url,
         metadata: activeSkin.variant === "SLIM" ? { model: "slim" } : undefined
-    }
+    } : undefined
 
-    const capeNode = shouldIncludeCape ? {
+    const capeNode = hasValidCape ? {
         url: activeCape.url
     } : undefined
 
@@ -78,7 +83,7 @@ async function getProfile({ uuid, unsigned = false }) {
     const payloadJson = JSON.stringify(texturePayload)
     const base64Value = Buffer.from(payloadJson).toString("base64")
 
-    const signature = unsigned ? null : signProfileData(base64Value)
+    const signature = unsigned ? null : utils.signProfileData(base64Value)
 
     const propertyNode = {
         name: "textures",

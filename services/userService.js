@@ -104,7 +104,7 @@ function getPlayerSettingsSchema() {
 }
 
 async function updatePlayerSettings({ uuid, body }) {
-    const rawSchema = database.getPlayerSettingsSchema()
+    const rawSchema = await database.getPlayerSettingsSchema()
     
     const validPrivCols = Array.isArray(rawSchema.privileges) 
         ? rawSchema.privileges 
@@ -255,7 +255,7 @@ async function getCapes({ uuid }) {
 }
 
 async function changeUsername({ uuid, newUsername }) {
-    const availability = database.checkUsernameAvailability(newUsername)
+    const availability = await database.checkUsernameAvailability(newUsername)
     
     if (!availability.allowed) {
         return { code: 400, message: availability.message }
@@ -322,7 +322,7 @@ async function processAndSetSkin(uuid, imageBuffer, variant) {
             await fs.writeFile(filePath, imageBuffer)
         }
 
-        const registerResult = database.registerTexture(hash, "SKIN", publicUrl)
+        const registerResult = await database.registerTexture(hash, "SKIN", publicUrl)
         
         if (registerResult.code !== 200 && registerResult.code !== 201) {
             return registerResult
@@ -363,7 +363,7 @@ async function fetchOrGenerateCertificate(uuid) {
         console.error("[Non-Critical] Certificate cleanup failed: ", err)
     })
 
-    const cached = database.getPlayerCertificate(uuid)
+    const cached = await database.getPlayerCertificate(uuid)
 
     if (cached.code === 200) {
         const expiresAtDate = new Date(cached.data.expiresAt)
@@ -402,7 +402,7 @@ async function fetchOrGenerateCertificate(uuid) {
     
     const signatureV2 = signer.sign(serverPrivateKey, "base64")
 
-    const saveResult = database.savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter)
+    const saveResult = await database.savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter)
     
     if (saveResult.code !== 200) {
         return { code: 500, message: "Database error while saving certificate" }

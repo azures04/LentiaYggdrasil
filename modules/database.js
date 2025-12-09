@@ -1240,7 +1240,7 @@ function registerTexture(hash, type, url, alias = null) {
     }
 }
 
-function getPlayerCertificate(uuid) {
+async function getPlayerCertificate(uuid) {
     try {
         const sql = "SELECT * FROM playerCertificates WHERE uuid = ?"
         const statement = database.prepare(sql)
@@ -1255,7 +1255,7 @@ function getPlayerCertificate(uuid) {
     }
 }
 
-function savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter) {
+async function savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expiresAt, refreshedAfter) {
     try {
         const sql = `
             INSERT OR REPLACE INTO playerCertificates 
@@ -1283,7 +1283,7 @@ function savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, expires
     }
 }
 
-function deleteExpiredCertificates(isoDate) {
+async function deleteExpiredCertificates(isoDate) {
     try {
         const sql = "DELETE FROM playerCertificates WHERE expiresAt < ?"
         const statement = database.prepare(sql)
@@ -1298,7 +1298,7 @@ function deleteExpiredCertificates(isoDate) {
     }
 }
 
-function addProfileAction(uuid, actionCode) {
+async function addProfileAction(uuid, actionCode) {
     try {
         const cleanUuid = uuid.replace(/-/g, "")
         const sql = "INSERT OR IGNORE INTO playerProfileActions (uuid, action) VALUES (?, ?)"
@@ -1315,7 +1315,7 @@ function addProfileAction(uuid, actionCode) {
     }
 }
 
-function removeProfileAction(uuid, actionCode) {
+async function removeProfileAction(uuid, actionCode) {
     try {
         const cleanUuid = uuid.replace(/-/g, "")
         const sql = "DELETE FROM playerProfileActions WHERE uuid = ? AND action = ?"
@@ -1331,7 +1331,7 @@ function removeProfileAction(uuid, actionCode) {
     }
 }
 
-function getPlayerActions(uuid) {
+async function getPlayerActions(uuid) {
     try {
         const cleanUuid = uuid.replace(/-/g, "")
         const sql = "SELECT action FROM playerProfileActions WHERE uuid = ?"
@@ -1350,7 +1350,7 @@ function getPlayerActions(uuid) {
     }
 }
 
-function clearAllPlayerActions(uuid) {
+async function clearAllPlayerActions(uuid) {
     try {
         const cleanUuid = uuid.replace(/-/g, "")
         const sql = "DELETE FROM playerProfileActions WHERE uuid = ?"
@@ -1366,9 +1366,11 @@ function clearAllPlayerActions(uuid) {
     }
 }
 
-function getActiveSkin(uuid) {
+async function getActiveSkin(uuid) {
     try {
-        const cleanUuid = uuid.replace(/-/g, "")
+        // CORRECTION : On utilise l'UUID tel quel (avec les tirets) 
+        // car c'est ainsi qu'il est stocké dans la table playersSkins.
+        
         const sql = `
             SELECT t.url, ps.variant 
             FROM playersSkins ps
@@ -1376,7 +1378,7 @@ function getActiveSkin(uuid) {
             WHERE ps.playerUuid = ? AND ps.isSelected = 1
         `
         const statement = database.prepare(sql)
-        const skin = statement.get(cleanUuid)
+        const skin = statement.get(uuid)
 
         return { code: 200, data: skin || null }
     } catch (error) {
@@ -1384,9 +1386,8 @@ function getActiveSkin(uuid) {
     }
 }
 
-function getActiveCape(uuid) {
+async function getActiveCape(uuid) {
     try {
-        const cleanUuid = uuid.replace(/-/g, "")
         const sql = `
             SELECT t.url 
             FROM playersCapes pc
@@ -1394,7 +1395,7 @@ function getActiveCape(uuid) {
             WHERE pc.playerUuid = ? AND pc.isSelected = 1
         `
         const statement = database.prepare(sql)
-        const cape = statement.get(cleanUuid)
+        const cape = statement.get(uuid)
 
         return { code: 200, data: cape || null }
     } catch (error) {
@@ -1402,7 +1403,7 @@ function getActiveCape(uuid) {
     }
 }
 
-function getProfileActionsList(uuid) {
+async function getProfileActionsList(uuid) {
     try {
         const cleanUuid = uuid.replace(/-/g, "")
         const sql = "SELECT action FROM playerProfileActions WHERE uuid = ?"

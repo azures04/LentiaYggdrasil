@@ -1,5 +1,6 @@
-const usernameRegex = /^[a-zA-Z0-9]{3,16}$/
-const database = require("./database")
+const crypto = require("node:crypto")
+const certsManager = require("./certsManager")
+const serverKeys = certsManager.getKeys()
 
 function getMinMaxFromRegex(regexString) {
     const extractionRegex = /\{(?<min>\d+),(?<max>\d+)\}/
