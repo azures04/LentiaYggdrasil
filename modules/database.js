@@ -19,7 +19,7 @@ async function setup() {
             createdAt TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "players".bold + " table ready"),
+    logger.log("[" + "SQLite".yellow + "] " + "players".bold + " table ready"),
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersProperties (
             name VARCHAR(256) NOT NULL,
@@ -28,7 +28,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersProperties".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersProperties".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS clientSessions (
             accessToken TEXT NOT NULL,
@@ -37,7 +37,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "clientSessions".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "clientSessions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS legacyClientSessions (
             sessionId VARCHAR(36) NOT NULL,
@@ -45,7 +45,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "legacyClientSessions".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "legacyClientSessions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS uuidToNameHistory (
             uuid VARCHAR(36) NOT NULL,
@@ -54,11 +54,11 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "uuidToNameHistory".bold + " table ready")
     database.exec(`
         CREATE INDEX IF NOT EXISTS idx_uuidToNameHistory_uuid ON uuidToNameHistory (uuid)
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "uuidToNameHistory".bold + " uuid index ready")
+    logger.log("[" + "SQLite".yellow + "] " + "uuidToNameHistory".bold + " uuid index ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS log_new_user_name
         AFTER INSERT ON players
@@ -68,7 +68,7 @@ async function setup() {
             VALUES (NEW.uuid, NEW.username, NULL);
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "log_new_user_name".bold + " trigger ready")
+    logger.log("[" + "SQLite".yellow + "] " + "log_new_user_name".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS log_user_name_change
         AFTER UPDATE ON players
@@ -78,7 +78,7 @@ async function setup() {
             VALUES (NEW.uuid, NEW.username, CURRENT_TIMESTAMP);
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "log_user_name_change".bold + " trigger ready")
+    logger.log("[" + "SQLite".yellow + "] " + "log_user_name_change".bold + " trigger ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS blockedServers (
             hashedIp VARCHAR(40) NOT NULL PRIMARY KEY,
@@ -86,7 +86,7 @@ async function setup() {
             reason VARCHAR(512) NULL
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "blockedServers".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "blockedServers".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersPrivileges (
             uuid VARCHAR(36) PRIMARY KEY,
@@ -97,7 +97,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersPrivileges".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersPrivileges".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersPreferences (
             uuid VARCHAR(36) PRIMARY KEY,
@@ -105,14 +105,14 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersPreferences".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersPreferences".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS banReasons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             key VARCHAR(512) UNIQUE NOT NULL
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "banReasons".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "banReasons".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS bans (
             banId VARCHAR(512) PRIMARY KEY NOT NULL,
@@ -124,11 +124,11 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "bans".bold + " table ready")
     database.exec(`
         CREATE INDEX IF NOT EXISTS idx_bans_uuid ON bans (uuid)
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "bans".bold + " uuid index ready")
+    logger.log("[" + "SQLite".yellow + "] " + "bans".bold + " uuid index ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS auto_init_player_settings
         AFTER INSERT ON players
@@ -148,7 +148,7 @@ async function setup() {
             FOREIGN KEY (blockedUuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersBlockslist".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersBlockslist".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS usernameRules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -167,7 +167,7 @@ async function setup() {
             createdAt TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "textures".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "textures".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersSkins (
             playerUuid VARCHAR(36) NOT NULL,
@@ -182,9 +182,9 @@ async function setup() {
             FOREIGN KEY (assetHash) REFERENCES textures(hash)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersSkins".bold + " table ready")
     database.exec(`CREATE INDEX IF NOT EXISTS idx_active_skin ON playersSkins (playerUuid, isSelected)`)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS playersCapes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -197,12 +197,12 @@ async function setup() {
             FOREIGN KEY (assetHash) REFERENCES textures(hash)
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playersCapes".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersCapes".bold + " table ready")
     database.exec(`CREATE INDEX IF NOT EXISTS idx_active_skin ON playersCapes (playerUuid, assetHash)`)
-    logger.log("[" + "MySQL".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playersSkins".bold + " playerUuid and isSelected index ready")
     database.exec(`INSERT OR IGNORE INTO textures (hash, type, url, uuid) VALUES ('df8ed96c557d441a63e7b6a4a911ab84fa453b42fc2ae6b01c3e1b02e138168c', 'SKIN', '/texture/alex.png', '${crypto.randomUUID()}')`)
     database.exec(`INSERT OR IGNORE INTO textures (hash, type, url, uuid) VALUES ('4c7b0468044bfecacc43d00a3a69335a834b73937688292c20d3988cae58248d', 'SKIN', '/texture/steve.png', '${crypto.randomUUID()}')`)
-    logger.log("[" + "MySQL".yellow + "] Inserted (or already inserted) defaults skin (steve, alex) in " + "textures".bold)
+    logger.log("[" + "SQLite".yellow + "] Inserted (or already inserted) defaults skin (steve, alex) in " + "textures".bold)
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS unique_active_skin
         AFTER UPDATE OF isSelected ON playersSkins
@@ -215,7 +215,7 @@ async function setup() {
             AND assetHash != NEW.assetHash;
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "unique_active_skin".bold + " trigger ready")
+    logger.log("[" + "SQLite".yellow + "] " + "unique_active_skin".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS unique_active_cape
         AFTER UPDATE OF isSelected ON playersCapes
@@ -228,7 +228,7 @@ async function setup() {
             AND id != NEW.id;
         END;
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "unique_active_cape".bold + " trigger ready")
+    logger.log("[" + "SQLite".yellow + "] " + "unique_active_cape".bold + " trigger ready")
     database.exec(`
         CREATE TRIGGER IF NOT EXISTS auto_assign_random_default_skin
         AFTER INSERT ON players
@@ -274,7 +274,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "playerProfileActions".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "playerProfileActions".bold + " table ready")
     database.exec(`
         CREATE TABLE IF NOT EXISTS serverSessions (
             uuid VARCHAR(36) PRIMARY KEY,
@@ -285,7 +285,7 @@ async function setup() {
             FOREIGN KEY (uuid) REFERENCES players(uuid) ON DELETE CASCADE
         )
     `)
-    logger.log("[" + "MySQL".yellow + "] " + "serverSessions".bold + " table ready")
+    logger.log("[" + "SQLite".yellow + "] " + "serverSessions".bold + " table ready")
 }
 
 async function register(email, username, password) {
@@ -305,7 +305,8 @@ async function register(email, username, password) {
             return { code: 415, message: "Illegal Server Character", error: "INVALID_USERNAME_FORMAT" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -323,7 +324,8 @@ async function getUser(identifier, requirePassword = false) {
         }
         return { code: 200, user }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -338,7 +340,8 @@ async function addPropertyToPlayer(key, value, uuid) {
             return { code: 500, message: "Internal Server Error", error: "Unknown" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -353,7 +356,8 @@ async function deletePropertyToPlayer(key, uuid) {
             return { code: 404, message: "Property not found for this user/key combination" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -368,7 +372,8 @@ async function upatePropertyToPlayer(key, value, uuid) {
             return { code: 404, message: "Property not found for this user/key combination", }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -382,7 +387,8 @@ async function getPlayerProperties(uuid) {
         }
         return { code: 200, properties: properties.map(property => { return { name: property.name, value: property.value } }) }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -396,7 +402,8 @@ async function getPlayerProperty(key, uuid) {
         }
         return { code: 200, property }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -411,7 +418,8 @@ async function insertClientSession(accessToken, clientToken, uuid) {
             return { code: 500, message: "Internal Server Error", error: "Unknown" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -428,7 +436,8 @@ async function insertLegacyClientSessions(sessionId, uuid) {
             return { code: 500, message: "Internal Server Error", error: "Unknown" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -450,7 +459,8 @@ async function validateLegacyClientSession(sessionId, uuid) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -472,7 +482,8 @@ async function validateClientSession(accessToken, clientToken) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -494,7 +505,8 @@ async function invalidateClientSession(accessToken, clientToken) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -516,7 +528,8 @@ async function revokeAccessTokens(uuid) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -551,7 +564,8 @@ async function getPlayerUsernameAt(uuid, dateInput) {
             return { code: 200, profileAt: profileAt }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -571,7 +585,8 @@ async function getPlayerNameHistory(uuid) {
         }
 
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -606,7 +621,8 @@ async function getNameUUIDs(username, dateInput) {
             return { code: 200, profileAt: profileAt }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -622,7 +638,8 @@ async function banServer(hashedIp, banner = "CONSOLE", reason = null) {
             return { code: 500, message: "Internal Server Error", error: "No changes made" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -638,7 +655,8 @@ async function unbanServer(hashedIp) {
             return { code: 404, message: "Server not found in blocked list", error: "Not Found" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -650,7 +668,8 @@ async function getBlockedServers() {
 
         return { code: 200, blockedServers: blockedServers.map(bannedServer => { return { sha1: bannedServer.hashedIp } }) }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -666,7 +685,8 @@ async function getServerBanDetails(hashedIp) {
             return { code: 404, message: "Server is not blocked", error: "Not Found" }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -693,7 +713,8 @@ async function getPlayerPrivileges(uuid) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -720,7 +741,8 @@ async function getPlayerPreferences(uuid) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -753,7 +775,8 @@ async function updatePlayerPrivileges(uuid, updates) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -786,7 +809,8 @@ async function updatePlayerPreferences(uuid, updates) {
             }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -851,7 +875,8 @@ async function unbanUser(uuid) {
         }
 
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -876,7 +901,8 @@ async function getPlayerBans(uuid) {
             return { code: 204 }
         }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1016,7 +1042,8 @@ async function getPlayerNameChangeStatus(uuid) {
         return { code: 200, data: response }
 
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1036,7 +1063,8 @@ async function getPlayerSkins(playerUuid) {
         const skins = database.prepare(sql).all(playerUuid)
         return { code: 200, skins }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1056,7 +1084,8 @@ async function getPlayerCapes(playerUuid) {
         const capes = database.prepare(sql).all(playerUuid)
         return { code: 200, capes }
     } catch (error) {
-        return { code: 500, message: "Internal Server Error", error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1076,7 +1105,8 @@ async function deletePlayerSkin(playerUuid, textureUuid) {
         return { code: 404, message: "Skin not found in wardrobe" }
 
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1093,7 +1123,7 @@ async function changeUsername(uuid, newName) {
         if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
             return { code: 409, message: "Username already taken" }
         }
-        return { code: 500, error: error.toString() }
+        return { code: 500, message: "Internal Server Error", error: error.toString() }
     }
 }
 
@@ -1105,7 +1135,8 @@ async function hideCape(playerUuid) {
         
         return { code: 200, message: "Cape hidden (unequipped)" }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1133,7 +1164,8 @@ async function showCape(playerUuid, textureUuid) {
             return { code: 403, message: "You do not own this cape." }
         }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1167,7 +1199,8 @@ async function resetSkin(playerUuid) {
             model: variant 
         }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1191,7 +1224,8 @@ async function setSkin(playerUuid, textureUuid, variant = "CLASSIC") {
         return { code: 200, message: "Skin set successfully" }
 
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1214,7 +1248,8 @@ async function addCapeToWardrobe(playerUuid, textureUuid) {
 
         return { code: 200, message: "Cape added to wardrobe" }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1247,7 +1282,8 @@ async function registerTexture(hash, type, url, alias = null) {
         }
 
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1262,7 +1298,8 @@ async function getPlayerCertificate(uuid) {
         }
         return { code: 404, message: "Certificate not found" }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1290,7 +1327,8 @@ async function savePlayerCertificate(uuid, privateKey, publicKey, signatureV2, e
         return { code: 500, message: "Failed to save certificate" }
 
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1305,7 +1343,8 @@ async function deleteExpiredCertificates(isoDate) {
             deletedCount: result.changes 
         }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1322,7 +1361,8 @@ async function addProfileAction(uuid, actionCode) {
             added: result.changes > 0
         }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1338,7 +1378,8 @@ async function removeProfileAction(uuid, actionCode) {
             deletedCount: result.changes 
         };
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1357,7 +1398,8 @@ async function getPlayerActions(uuid) {
             actions: actionsList 
         }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1373,7 +1415,8 @@ async function clearAllPlayerActions(uuid) {
             deletedCount: result.changes 
         };
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1390,7 +1433,8 @@ async function getActiveSkin(uuid) {
 
         return { code: 200, data: skin || null }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1407,7 +1451,8 @@ async function getActiveCape(uuid) {
 
         return { code: 200, data: cape || null }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1422,7 +1467,8 @@ async function getProfileActionsList(uuid) {
 
         return { code: 200, data: actions }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1442,7 +1488,8 @@ function getServerSession(uuid, serverId) {
 
         return { code: 200, valid: true, ip: session.ip }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 
@@ -1457,7 +1504,8 @@ function saveServerSession(uuid, accessToken, serverId, ip) {
 
         return { code: 200, success: result.changes > 0 }
     } catch (error) {
-        return { code: 500, error: error.toString() }
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
     }
 }
 

@@ -137,7 +137,7 @@ async function hasJoinedServer({ username, serverId, ip }) {
         return { code: 204, message: "Invalid IP address" }
     }
 
-    const profileResult = await module.exports.getSessionProfile({ 
+    const profileResult = await module.exports.getProfile({ 
         uuid: uuid, 
         unsigned: false 
     })
