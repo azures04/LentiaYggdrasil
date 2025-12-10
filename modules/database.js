@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs")
 const logger = new Logger(path.join(__dirname, ".."))
 const Database = require("better-sqlite3")
 const database = new Database(path.join(__dirname, "..", "data", "database.db"))
-const usernameRegex = /^[a-zA-Z0-9]{3,16}$/
+const usernameRegex = /^[a-zA-Z0-9_]{3,16}$/
 
 async function setup() {
     database.exec(`

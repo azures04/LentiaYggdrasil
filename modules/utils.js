@@ -20,17 +20,15 @@ function getMinMaxFromRegex(regexString) {
 }
 
 async function getRegistrationCountryFromIp(ipAddress) {
-    const apiUrl = `http://ip-api.com/json/${ipAddress}?fields=countryCode`
+    const apiUrl = `https://ip-api.com/json/${ipAddress}?fields=countryCode`
 
     try {
         const response = await fetch(apiUrl)
-
         if (!response.ok) {
             return "FR"
         }
 
         const data = await response.json()
-
         if (data && data.countryCode) {
             const countryCode = data.countryCode
             return countryCode
@@ -39,7 +37,7 @@ async function getRegistrationCountryFromIp(ipAddress) {
         }
 
     } catch (error) {
-        return "FR"
+        return "??"
     }
 }
 

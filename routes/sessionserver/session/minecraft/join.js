@@ -11,8 +11,15 @@ router.post("", async (req, res) => {
         return utils.handleAccountsAPIError(res, verificationResult.code, req.originalUrl, verificationResult.error, verificationResult.message)
     }
 
+    const tokenUuid = verificationResult.user.uuid
+    const requestedProfile = utils.addDashesToUUID(req.body.selectedProfile)
+
+    if (tokenUuid !== requestedProfile) {
+        return utils.handleAccountsAPIError(res, 403, req.originalUrl, "Forbidden", "You cannot join with a profile that is not yours.")
+    }
+
     const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress
-    const result = await sessionsService.joinServer({ clientToken: verificationResult.session.clientToken, accessToken, selectedProfile: utils.addDashesToUUID(selectedProfile), serverId, ip })
+    const result = await sessionsService.joinServer({ clientToken: verificationResult.session.clientToken, accessToken, selectedProfile: requestedProfile, serverId, ip })
     if (result.code === 204) {
         return res.status(204).end()
     }
