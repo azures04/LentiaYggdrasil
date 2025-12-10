@@ -8,7 +8,7 @@ const router = express.Router()
 
 const upload = multer({ 
     storage: multer.diskStorage({
-        destination: path.join(__dirname, "data", "temps")
+        destination: path.join(__dirname, "..", "..", "..", "..", "data", "temps")
     }),
     limits: { fileSize: 2 * 1024 * 1024 }
 })

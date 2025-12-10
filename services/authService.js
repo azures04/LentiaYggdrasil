@@ -96,23 +96,41 @@ async function authenticate({ identifier, password, clientToken, requireUser }) 
 }
 
 async function refreshToken({ previousAccessToken, clientToken, requireUser }) {
-    const identifier = jwt.decode(previousAccessToken).sub
-    const userResult = await database.getUser(identifier, true)
+    const sessionCheck = await database.getClientSession(previousAccessToken, clientToken)
+    if (sessionCheck.code !== 200) {
+        return { 
+            code: 403, 
+            error: "ForbiddenOperationException", 
+            message: "Invalid token or session expired." 
+        }
+    }
+
+    const uuid = sessionCheck.session.uuid
+    const userResult = await database.getUser(uuid, true)
     if (userResult.code != 200) {
         return userResult
     }
+
     await database.invalidateClientSession(previousAccessToken, clientToken)
-    delete userResult.user.password
-    const $clientToken = uuidRegex.test(clientToken) == true ? clientToken : crypto.randomUUID()
-    const accessToken = jwt.sign({
+    delete userResult.user.password    
+    const $clientToken = uuidRegex.test(clientToken) ? clientToken : crypto.randomUUID()
+    
+    const newAccessToken = jwt.sign({
         uuid: userResult.user.uuid,
         username: userResult.user.username,
         clientToken: $clientToken,
-    }, keys.authenticationKeys.private, { subject: userResult.user.uuid, issuer: "LentiaYggdrasil", expiresIn: "1d", algorithm: "RS256" })
-    const clientSessionProcess = await database.insertClientSession(accessToken, $clientToken, userResult.user.uuid )
+    }, keys.authenticationKeys.private, { 
+        subject: userResult.user.uuid, 
+        issuer: "LentiaYggdrasil", 
+        expiresIn: "1d", 
+        algorithm: "RS256" 
+    })
+
+    const clientSessionProcess = await database.insertClientSession(newAccessToken, $clientToken, userResult.user.uuid)
     if (clientSessionProcess.code != 204) {
         return clientSessionProcess
     }
+
     const userObject = {
         clientToken: clientSessionProcess.clientToken,
         accessToken: clientSessionProcess.accessToken,
@@ -121,6 +139,7 @@ async function refreshToken({ previousAccessToken, clientToken, requireUser }) {
             id: userResult.user.uuid,
         }
     }
+
     if (requireUser) {
         const propertiesRequest = await database.getPlayerProperties(userResult.user.uuid)
         if (propertiesRequest.code != 200) {
@@ -131,6 +150,7 @@ async function refreshToken({ previousAccessToken, clientToken, requireUser }) {
             properties: propertiesRequest.properties
         }
     }
+
     return {
         code: 200,
         response: userObject

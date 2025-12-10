@@ -133,7 +133,7 @@ async function hasJoinedServer({ username, serverId, ip }) {
         return { code: 204, message: "Join verification failed" }
     }
 
-    if (joinCheck.ip != ip) {
+    if (ip && ip.trim() != "" && joinCheck.ip != ip) {
         return { code: 204, message: "Invalid IP address" }
     }
 

@@ -355,7 +355,7 @@ async function uploadSkinFromUrl(uuid, url, variant) {
                 }
 
                 const nextUrl = new URL(location, currentUrl).toString()
-                if (!utils.isSafeUrl(nextUrl)) {
+                if (!ssrfcheck.isSSRFSafeURL(nextUrl)) {
                     return { code: 403, message: "Forbidden Redirect URL (Target is unsafe)" }
                 }
 
@@ -404,16 +404,30 @@ async function uploadSkinFromUrl(uuid, url, variant) {
 }
 
 async function uploadSkinFromFile(uuid, fileObject, variant) {
-    if (!fileObject || !fileObject.buffer) {
+    if (!fileObject || !fileObject.path) {
         return { code: 400, message: "No file provided." }
     }
-    
-    const pngInfo = utils.getPngDimensions(fileObject.buffer)
-    if (!pngInfo) {
-        return { code: 400, message: "Invalid file format. Only valid PNGs are allowed." }
+
+    try {
+        const fileBuffer = await fs.readFile(fileObject.path)
+        const pngInfo = utils.getPngDimensions(fileBuffer)
+        if (!pngInfo) {
+            await fs.unlink(fileObject.path).catch(() => {})
+            return { code: 400, message: "Invalid file format. Only valid PNGs are allowed." }
+        }
+
+        const result = await processAndSetSkin(uuid, fileBuffer, variant)
+        await fs.unlink(fileObject.path)
+
+        return result
+
+    } catch (error) {
+        if (fileObject && fileObject.path) {
+            await fs.unlink(fileObject.path).catch(err => console.error("Failed to cleanup temp file:", err))
+        }
+        
+        return { code: 500, message: "Error processing skin file", error: error.toString() }
     }
-    
-    return await processAndSetSkin(uuid, fileObject.buffer, variant)
 }
 
 async function fetchOrGenerateCertificate(uuid) {

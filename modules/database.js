@@ -1438,6 +1438,29 @@ async function getActiveSkin(uuid) {
     }
 }
 
+async function getClientSession(accessToken, clientToken) {
+    try {
+        const sql = `SELECT * FROM clientSessions WHERE accessToken = ? AND clientToken = ?`
+        const statement = database.prepare(sql)
+        
+        const session = statement.get(accessToken, clientToken) 
+        if (session) { 
+            return { 
+                code: 200, 
+                session: session
+            } 
+        } else {
+            return { 
+                code: 404, 
+                message: "Client session not found" 
+            }
+        }
+    } catch (error) {
+        logger.log("[" + "SQLite".yellow + "] " + "Internal Server Error".bold + " : " + error.toString())
+        return { code: 500, message: "Internal Server Error", error: "Please contact an administrator." }
+    }
+}
+
 async function getActiveCape(uuid) {
     try {
         const sql = `
@@ -1533,6 +1556,7 @@ module.exports = {
     getPlayerSkins,
     registerTexture,
     getBlockedUuids,
+    getClientSession,
     getPlayerActions,
     getServerSession,
     addProfileAction,
